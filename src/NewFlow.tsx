@@ -11,20 +11,17 @@ import {
   Button,
 } from "@mantine/core";
 import { IconTrash, IconPlus } from "@tabler/icons-react";
-
-export type FlowParameter = {
-  name: string;
-};
+import { FieldDescriptorProto } from "@the-sage-group/awyes-web";
 
 interface NewFlowProps {
   opened: boolean;
   onClose: () => void;
-  onCreateFlow: (name: string, parameters: FlowParameter[]) => void;
+  onCreateFlow: (name: string, parameters: FieldDescriptorProto[]) => void;
 }
 
 export function NewFlow({ opened, onClose, onCreateFlow }: NewFlowProps) {
   const [newFlowName, setNewFlowName] = useState("");
-  const [parameters, setParameters] = useState<FlowParameter[]>([]);
+  const [parameters, setParameters] = useState<FieldDescriptorProto[]>([]);
 
   const handleCreateFlow = () => {
     onCreateFlow(newFlowName, parameters);
@@ -58,7 +55,9 @@ export function NewFlow({ opened, onClose, onCreateFlow }: NewFlowProps) {
     >
       <Stack gap="xl">
         <Stack gap="xs">
-          <Text size="sm" fw={500}>Flow Name</Text>
+          <Text size="sm" fw={500}>
+            Flow Name
+          </Text>
           <TextInput
             placeholder="Enter flow name"
             value={newFlowName}
@@ -69,7 +68,9 @@ export function NewFlow({ opened, onClose, onCreateFlow }: NewFlowProps) {
 
         <Stack gap="xs">
           <Group justify="space-between">
-            <Text fw={500} size="sm">Parameters</Text>
+            <Text fw={500} size="sm">
+              Parameters
+            </Text>
             <Button
               variant="light"
               size="sm"
@@ -86,7 +87,9 @@ export function NewFlow({ opened, onClose, onCreateFlow }: NewFlowProps) {
                 <TextInput
                   placeholder="Parameter name"
                   value={param.name}
-                  onChange={(e) => updateParameter(index, e.currentTarget.value)}
+                  onChange={(e) =>
+                    updateParameter(index, e.currentTarget.value)
+                  }
                   style={{ flex: 1 }}
                 />
                 <ActionIcon
@@ -102,7 +105,9 @@ export function NewFlow({ opened, onClose, onCreateFlow }: NewFlowProps) {
         </Stack>
 
         <Group justify="flex-end">
-          <Button variant="light" onClick={onClose}>Cancel</Button>
+          <Button variant="light" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={handleCreateFlow} disabled={!newFlowName}>
             Create Flow
           </Button>
@@ -110,4 +115,4 @@ export function NewFlow({ opened, onClose, onCreateFlow }: NewFlowProps) {
       </Stack>
     </Modal>
   );
-} 
+}

@@ -8,30 +8,29 @@ import {
   BackgroundVariant,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Paper, Title, Group, Badge, Text } from "@mantine/core";
-import { IconArrowsRandom } from "@tabler/icons-react";
+import { Paper, Title, Group, Badge, Text, Button } from "@mantine/core";
+import { IconArrowsRandom, IconPlayerPlay } from "@tabler/icons-react";
+import { FieldDescriptorProto } from "@the-sage-group/awyes-web";
 
 import { FlowNode } from "./Node";
-import { addFlowEdge, FlowEdge } from "./Edge";
+import { addFlowEdge } from "./Edge";
 import { FlowContext } from "./Context";
-import { FlowGraphType, FlowNodeType, FlowEdgeType } from "./types";
-import { FlowParameter } from "./NewFlow";
-
-interface ExtendedFlowGraphType extends FlowGraphType {
-  parameters: FlowParameter[];
-}
+import {
+  FlowNodeType,
+  FlowEdgeType,
+  FlowGraphType,
+  toFlowProto,
+} from "./types";
+import { useAwyes } from "./Context";
 
 const nodeTypes = {
   flowNode: FlowNode,
 };
 
-const edgeTypes = {
-  flowEdge: FlowEdge,
-};
-
-export default function Flow({ flow }: { flow: ExtendedFlowGraphType }) {
+export default function Flow({ flow }: { flow: FlowGraphType }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdgeType>([]);
+  const service = useAwyes();
 
   useEffect(() => {
     setNodes([
@@ -44,6 +43,15 @@ export default function Flow({ flow }: { flow: ExtendedFlowGraphType }) {
     ]);
   }, [flow]);
 
+  const executeFlow = async () => {
+    try {
+      const response = await service.executeFlow(toFlowProto(flow));
+      console.log(response);
+    } catch (error) {
+      console.error("Failed to execute flow:", error);
+    }
+  };
+
   return (
     <FlowContext.Provider value={{ nodes, edges, setNodes, setEdges }}>
       <ReactFlow
@@ -52,7 +60,6 @@ export default function Flow({ flow }: { flow: ExtendedFlowGraphType }) {
         edges={edges}
         minZoom={0.1}
         nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
         onConnect={(connection) => addFlowEdge(connection, edges, setEdges)}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
@@ -70,7 +77,7 @@ export default function Flow({ flow }: { flow: ExtendedFlowGraphType }) {
             maxWidth: "400px",
           }}
         >
-          <Group gap="xs" mb="xs">
+          <Group gap="xs" mb={flow.parameters.length > 0 ? "xs" : 0}>
             <IconArrowsRandom
               size={20}
               style={{ color: "var(--mantine-color-blue-6)" }}
@@ -86,15 +93,41 @@ export default function Flow({ flow }: { flow: ExtendedFlowGraphType }) {
                 Parameters
               </Text>
               <Group gap="xs">
-                {flow.parameters.map((param: FlowParameter, index: number) => (
-                  <Badge key={index} size="sm" variant="light">
-                    {param.name}
-                  </Badge>
-                ))}
+                {flow.parameters.map(
+                  (param: FieldDescriptorProto, index: number) => (
+                    <Badge key={index} size="sm" variant="light">
+                      {param.name}
+                    </Badge>
+                  )
+                )}
               </Group>
             </>
           )}
         </Paper>
+
+        <Button
+          size="xl"
+          radius="xl"
+          color="blue"
+          variant="filled"
+          disabled={nodes.length === 0}
+          style={{
+            position: "absolute",
+            bottom: "2rem",
+            right: "2rem",
+            zIndex: 5,
+            width: "64px",
+            height: "64px",
+            padding: 0,
+          }}
+          onClick={executeFlow}
+          title={
+            nodes.length === 0 ? "Add nodes to execute flow" : "Execute flow"
+          }
+        >
+          <IconPlayerPlay size={32} />
+        </Button>
+
         <Controls />
         <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
       </ReactFlow>

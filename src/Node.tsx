@@ -1,36 +1,19 @@
-import { v4 as uuid } from "uuid";
-import { Node } from "../../types";
+import {
+  FieldDescriptorProto_Type,
+  FieldDescriptorProto_Label,
+} from "@the-sage-group/awyes-web";
 import { NodeProps, Handle, Position } from "@xyflow/react";
 import { Paper, Text, Stack, Group, Badge, TextInput } from "@mantine/core";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { FlowNodeType } from "./types";
-import { FlowContext } from "./Context";
-
-export function toFlowNode(node: Node): FlowNodeType {
-  return {
-    id: uuid(),
-    type: "flowNode",
-    data: node,
-    position: { x: 100, y: 100 },
-  };
-}
 
 export function FlowNode(props: NodeProps<FlowNodeType>) {
-  const { nodes, setNodes } = useContext(FlowContext);
-
-  const { id, data: node } = props;
+  const { data: node } = props;
   const [nodeName, setNodeName] = useState(node.name);
   const [isEditing, setIsEditing] = useState(true);
 
   const updateNodeName = () => {
     setIsEditing(false);
-    setNodes(
-      nodes.map((oldNode) =>
-        oldNode.id === id
-          ? { ...oldNode, data: { ...oldNode.data, name: nodeName } }
-          : oldNode
-      )
-    );
   };
 
   return (
@@ -69,14 +52,14 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
           )}
         </div>
 
-        {/* Node Type section */}
+        {/* Node Handler section */}
         <div>
           <Text size="sm" fw={600} c="dimmed" mb={4}>
-            Type
+            Handler
           </Text>
           <Group gap={8}>
             <Badge variant="dot" color="violet" size="sm">
-              {node.type}
+              {`${node.context}.${node.name}`}
             </Badge>
           </Group>
         </div>
@@ -94,7 +77,9 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
                     {param.name}
                   </Text>
                   <Badge variant="dot" color="blue" size="sm">
-                    {param.type}
+                    {`${
+                      param.label ? FieldDescriptorProto_Label[param.label] : ""
+                    } ${FieldDescriptorProto_Type[param.type!]}`}
                   </Badge>
                 </Group>
               ))}
@@ -115,7 +100,9 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
                     {ret.name}
                   </Text>
                   <Badge variant="dot" color="green" size="sm">
-                    {ret.type}
+                    {`${
+                      ret.label ? FieldDescriptorProto_Label[ret.label] : ""
+                    } ${FieldDescriptorProto_Type[ret.type!]}`}
                   </Badge>
                 </Group>
               ))}

@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 import { useEffect, useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -8,58 +9,69 @@ import {
   ScrollArea,
   Group,
   Title,
+  Text,
 } from "@mantine/core";
+import { FieldDescriptorProto } from "@the-sage-group/awyes-web";
+import { SpotlightActionData, spotlight } from "@mantine/spotlight";
 import { IconPlus, IconFunction, IconArrowRight } from "@tabler/icons-react";
 
 import Flow from "./Flow";
-import { Node } from "../../types";
-import { FlowGraphType } from "./types";
 import { Search } from "./Search";
-import { SpotlightActionData, spotlight } from "@mantine/spotlight";
-import { toFlowNode } from "./Node";
-import { NewFlow, FlowParameter } from "./NewFlow";
-
-interface ExtendedFlowGraphType extends FlowGraphType {
-  parameters: FlowParameter[];
-}
+import { NewFlow } from "./NewFlow";
+import { useAwyes } from "./Context";
+import { FlowGraphType, toFlowGraph, toFlowNode } from "./types";
 
 export default function App() {
+  const service = useAwyes();
   const [opened, { toggle }] = useDisclosure();
   const [modalOpened, { open: openModal, close: closeModal }] =
     useDisclosure(false);
   const [actions, setActions] = useState<SpotlightActionData[]>([]);
-  const [flows, setFlows] = useState<ExtendedFlowGraphType[]>([]);
-  const [activeFlow, setActiveFlow] = useState<ExtendedFlowGraphType>({
-    name: "untitled",
-    nodes: [],
-    edges: [],
-    parameters: [],
-  });
+  const [flows, setFlows] = useState<FlowGraphType[]>([]);
+  const [activeFlow, setActiveFlow] = useState<FlowGraphType | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:3000/").then((res) => {
-      res.json().then((nodes: Node[]) => {
-        setActions(
-          nodes.map((node) => ({
-            id: node.id,
-            label: node.type,
-            description: node.description,
-            onClick: () => {
-              setActiveFlow((currentFlow) => ({
-                ...currentFlow,
-                nodes: [...currentFlow.nodes, toFlowNode(node)],
-              }));
-            },
-            leftSection: <IconFunction />,
-          }))
-        );
-      });
-    });
+    async function fetchData() {
+      try {
+        const [nodeResponse, flowResponse] = await Promise.all([
+          service.listNodes(),
+          service.listFlows(),
+        ]);
+        setFlows(flowResponse.flows.map(toFlowGraph));
+        const nodeActions = nodeResponse.nodes.map((node) => ({
+          id: uuidv4(),
+          label: `${node.context}.${node.name}`,
+          description: node.description,
+          onClick: () => {
+            setActiveFlow((currentFlow: FlowGraphType | null) => {
+              if (currentFlow) {
+                return {
+                  ...currentFlow,
+                  nodes: [...currentFlow.nodes, toFlowNode(node)],
+                };
+              }
+              return currentFlow;
+            });
+          },
+          leftSection: <IconFunction />,
+        }));
+        setActions(nodeActions);
+      } catch (error) {
+        console.error("Failed to fetch nodes and flows:", error);
+      }
+    }
+    fetchData();
   }, []);
 
-  const handleCreateFlow = (name: string, parameters: FlowParameter[]) => {
+  const handleCreateFlow = (
+    name: string,
+    parameters: FieldDescriptorProto[]
+  ) => {
     const newFlow = {
       name,
+      version: 1,
+      context: "",
+      description: "",
       nodes: [],
       edges: [],
       parameters,
@@ -110,6 +122,7 @@ export default function App() {
             New Flow
           </Button>
           <Button
+            disabled={!activeFlow}
             onClick={() => spotlight.open()}
             leftSection={<IconPlus size={16} />}
           >
@@ -157,7 +170,33 @@ export default function App() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <Flow flow={activeFlow} />
+        {activeFlow ? (
+          <Flow flow={activeFlow} />
+        ) : (
+          <div
+            style={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "1rem",
+              color: "var(--mantine-color-gray-6)",
+            }}
+          >
+            <Title order={2}>No Flow Selected</Title>
+            <Text>
+              Select an existing flow or create a new one to get started
+            </Text>
+            <Button
+              variant="light"
+              onClick={openModal}
+              leftSection={<IconPlus size={16} />}
+            >
+              Create New Flow
+            </Button>
+          </div>
+        )}
       </AppShell.Main>
     </AppShell>
   );
