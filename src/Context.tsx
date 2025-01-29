@@ -1,30 +1,35 @@
+import { AwyesClient } from "@the-sage-group/awyes-web";
+import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport";
 import { createContext, useContext, ReactNode } from "react";
-import { AwyesService } from "./client";
-import { FlowNodeType, FlowEdgeType } from "./types";
+import { FlowGraphType, FlowNodeType } from "./types";
 
 // Flow Context
 type FlowContextType = {
-  nodes: FlowNodeType[];
-  edges: FlowEdgeType[];
-  setNodes: React.Dispatch<React.SetStateAction<FlowNodeType[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<FlowEdgeType[]>>;
+  activeFlow: FlowGraphType | null;
+  setActiveFlow: React.Dispatch<React.SetStateAction<FlowGraphType | null>>;
+  selectedNode: FlowNodeType | null;
+  setSelectedNode: React.Dispatch<React.SetStateAction<FlowNodeType | null>>;
 };
 
 export const FlowContext = createContext<FlowContextType>({
-  nodes: [],
-  edges: [],
-  setNodes: () => {},
-  setEdges: () => {},
+  activeFlow: null,
+  setActiveFlow: () => {},
+  selectedNode: null,
+  setSelectedNode: () => {},
 });
 
 // Awyes Context
-const AwyesContext = createContext<AwyesService | null>(null);
+const AwyesContext = createContext<AwyesClient | null>(null);
 
 export function AwyesProvider({ children }: { children: ReactNode }) {
-  const service = new AwyesService();
+  const transport = new GrpcWebFetchTransport({
+    baseUrl: "http://localhost:8080",
+    allowInsecure: true,
+  });
+  const client = new AwyesClient(transport);
 
   return (
-    <AwyesContext.Provider value={service}>{children}</AwyesContext.Provider>
+    <AwyesContext.Provider value={client}>{children}</AwyesContext.Provider>
   );
 }
 

@@ -1,25 +1,97 @@
-import { v4 as uuid } from "uuid";
-import { Connection } from "@xyflow/react";
-import { FlowEdgeType } from "./types";
+import { useContext, useState } from "react";
+import { BezierEdge, EdgeProps } from "@xyflow/react";
+import { Popover, Autocomplete, Badge, rem } from "@mantine/core";
 
-export function addFlowEdge(
-  connection: Connection,
-  edges: FlowEdgeType[],
-  setEdges: (edges: FlowEdgeType[]) => void
-) {
-  const id = uuid();
-  setEdges([
-    ...edges,
-    {
-      id,
-      source: connection.source,
-      target: connection.target,
-      data: {
-        id,
-        source: connection.source,
-        target: connection.target,
-        mappings: [],
-      },
-    },
-  ]);
+import { FlowEdgeType } from "./types";
+import { FlowContext } from "./Context";
+
+export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
+  const [opened, setOpened] = useState(false);
+  const { activeFlow, setActiveFlow } = useContext(FlowContext);
+  const { data: edge, id } = props;
+  if (!edge) return null;
+  const sourceNode = activeFlow?.nodes.find((n) => n.id === props.source)?.data;
+  const targetNode = activeFlow?.nodes.find((n) => n.id === props.target)?.data;
+  if (!sourceNode || !targetNode) return null;
+
+  return (
+    <>
+      <BezierEdge {...props} style={{ opacity: 0.2 }} />
+      <foreignObject
+        width={120}
+        height={30}
+        x={props.sourceX + (props.targetX - props.sourceX) * 0.5}
+        y={props.sourceY + (props.targetY - props.sourceY) * 0.5}
+        style={{
+          overflow: "visible",
+          position: "absolute",
+          pointerEvents: "all",
+        }}
+      >
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          <Popover
+            opened={opened}
+            onChange={setOpened}
+            position="top"
+            withArrow
+            shadow="md"
+            width={200}
+            closeOnClickOutside={true}
+            trapFocus
+          >
+            <Popover.Target>
+              <Badge
+                variant={edge.label ? "light" : "outline"}
+                color={
+                  edge.label === "Success"
+                    ? "green"
+                    : edge.label === "Error"
+                    ? "red"
+                    : "gray"
+                }
+                style={{
+                  width: "100%",
+                  cursor: "pointer",
+                  textTransform: "none",
+                  fontSize: rem(12),
+                  position: "relative",
+                }}
+                onClick={() => setOpened(true)}
+              >
+                {edge.label || "Add label"}
+              </Badge>
+            </Popover.Target>
+            <Popover.Dropdown p="xs">
+              <Autocomplete
+                data={["Success", "Error"]}
+                placeholder="Add edge label"
+                value={edge.label || ""}
+                variant="filled"
+                size="xs"
+                onChange={(value) => {
+                  const updatedEdges = activeFlow?.edges.map((e) => {
+                    if (e.id === id) {
+                      e.data!.label = value;
+                      e.data!.from = sourceNode;
+                      e.data!.to = targetNode;
+                    }
+                    return e;
+                  });
+                  setActiveFlow({
+                    ...activeFlow,
+                    edges: updatedEdges,
+                  });
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    setOpened(false);
+                  }
+                }}
+              />
+            </Popover.Dropdown>
+          </Popover>
+        </div>
+      </foreignObject>
+    </>
+  );
 }

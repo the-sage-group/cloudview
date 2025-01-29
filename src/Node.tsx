@@ -1,115 +1,124 @@
-import {
-  FieldDescriptorProto_Type,
-  FieldDescriptorProto_Label,
-} from "@the-sage-group/awyes-web";
 import { NodeProps, Handle, Position } from "@xyflow/react";
-import { Paper, Text, Stack, Group, Badge, TextInput } from "@mantine/core";
-import { useState } from "react";
+import { Paper, Text, Stack, Badge, TextInput } from "@mantine/core";
+import { useContext, useState } from "react";
 import { FlowNodeType } from "./types";
+import { FlowContext } from "./Context";
 
 export function FlowNode(props: NodeProps<FlowNodeType>) {
-  const { data: node } = props;
-  const [nodeName, setNodeName] = useState(node.name);
-  const [isEditing, setIsEditing] = useState(true);
+  const { data: node, id } = props;
+  const { activeFlow, setActiveFlow, selectedNode, setSelectedNode } =
+    useContext(FlowContext);
+  const [nodeName, setNodeName] = useState(
+    node.name ? node.name : node.handler?.name
+  );
+  const [isEditing, setIsEditing] = useState(node.name ? false : true);
 
   const updateNodeName = () => {
     setIsEditing(false);
+    if (!activeFlow) return;
+    const updatedNodes = activeFlow.nodes.map((n) => {
+      if (n.id === node.id) {
+        n.data.name = nodeName;
+      }
+      return n;
+    });
+    const updatedEdges = activeFlow.edges.map((e) => {
+      if (!e.data?.from || !e.data?.to) return e;
+      if (e.source === node.id) {
+        e.data.from.name = nodeName;
+      }
+      if (e.target === node.id) {
+        e.data.to.name = nodeName;
+      }
+      return e;
+    });
+    setActiveFlow({
+      ...activeFlow,
+      nodes: updatedNodes,
+      edges: updatedEdges,
+    });
   };
 
+  const isSelected = selectedNode?.id === id;
+
   return (
-    <Paper shadow="sm" p="md" withBorder style={{ minWidth: 200 }}>
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
-      <Stack gap="md">
-        {/* Name section */}
-        <div>
-          <Text size="sm" fw={600} c="dimmed" mb={4}>
-            Name
-          </Text>
+    <div style={{ position: "relative" }}>
+      <Handle type="target" position={Position.Top} style={{ left: "50%" }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ left: "50%" }}
+      />
+      <Paper
+        shadow="sm"
+        p="md"
+        radius="xl"
+        withBorder
+        onClick={() => {
+          const node = activeFlow?.nodes.find((n) => n.id === id);
+          if (node) {
+            setSelectedNode(node);
+          }
+        }}
+        style={{
+          minWidth: "200px",
+          maxWidth: "300px",
+          width: "fit-content",
+          cursor: "pointer",
+          background: isSelected
+            ? "var(--mantine-color-blue-0)"
+            : "var(--mantine-color-white)",
+          borderColor: isSelected ? "var(--mantine-color-blue-6)" : undefined,
+        }}
+      >
+        <Stack gap="xs" align="center" style={{ width: "100%" }}>
           {isEditing ? (
             <TextInput
               value={nodeName}
               onChange={(e) => setNodeName(e.target.value)}
               placeholder="Enter node name"
               required
-              style={{ flex: 1 }}
               onBlur={updateNodeName}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   updateNodeName();
                 }
               }}
+              style={{ width: "100%" }}
+              onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <Text
-              size="lg"
-              fw={700}
-              onDoubleClick={() => setIsEditing(true)}
-              style={{ cursor: "pointer" }}
+              size="sm"
+              fw={600}
+              ta="center"
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+              style={{ cursor: "text", wordBreak: "break-word" }}
             >
               {nodeName}
             </Text>
           )}
-        </div>
-
-        {/* Node Handler section */}
-        <div>
-          <Text size="sm" fw={600} c="dimmed" mb={4}>
-            Handler
-          </Text>
-          <Group gap={8}>
-            <Badge variant="dot" color="violet" size="sm">
-              {`${node.context}.${node.name}`}
-            </Badge>
-          </Group>
-        </div>
-
-        {/* Parameters section */}
-        {node.parameters.length > 0 && (
-          <div>
-            <Text size="sm" fw={600} c="dimmed" mb={4}>
-              Parameters
-            </Text>
-            <Stack gap={6}>
-              {node.parameters.map((param, index) => (
-                <Group key={index} gap={8}>
-                  <Text size="sm" fw={500}>
-                    {param.name}
-                  </Text>
-                  <Badge variant="dot" color="blue" size="sm">
-                    {`${
-                      param.label ? FieldDescriptorProto_Label[param.label] : ""
-                    } ${FieldDescriptorProto_Type[param.type!]}`}
-                  </Badge>
-                </Group>
-              ))}
-            </Stack>
-          </div>
-        )}
-
-        {/* Returns section */}
-        {node.returns.length > 0 && (
-          <div>
-            <Text size="sm" fw={600} c="dimmed" mb={4}>
-              Returns
-            </Text>
-            <Stack gap={6}>
-              {node.returns.map((ret, index) => (
-                <Group key={index} gap={8}>
-                  <Text size="sm" fw={500}>
-                    {ret.name}
-                  </Text>
-                  <Badge variant="dot" color="green" size="sm">
-                    {`${
-                      ret.label ? FieldDescriptorProto_Label[ret.label] : ""
-                    } ${FieldDescriptorProto_Type[ret.type!]}`}
-                  </Badge>
-                </Group>
-              ))}
-            </Stack>
-          </div>
-        )}
-      </Stack>
-    </Paper>
+          <Badge
+            variant="dot"
+            color="violet"
+            size="sm"
+            styles={{
+              root: {
+                maxWidth: "100%",
+                whiteSpace: "normal",
+                height: "auto",
+                padding: "4px 8px",
+                textAlign: "center",
+              },
+            }}
+          >
+            {`${node.handler?.context}.${node.handler?.name}`}
+          </Badge>
+        </Stack>
+      </Paper>
+    </div>
   );
 }
