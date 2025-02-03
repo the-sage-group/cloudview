@@ -26,11 +26,11 @@ import {
 } from "@tabler/icons-react";
 
 export function SelectedNode() {
-  const { selectedNode, events } = useContext(FlowContext);
+  const { selectedNode, selectedEvents } = useContext(FlowContext);
   if (!selectedNode) return null;
 
   // Filter events for the selected node
-  const nodeEvents = events.filter(
+  const nodeEvents = selectedEvents.filter(
     (event) => event.position?.name === selectedNode.data.name
   );
 
@@ -211,8 +211,13 @@ export function SelectedNode() {
 
 export function FlowNode(props: NodeProps<FlowNodeType>) {
   const { data: node, id } = props;
-  const { activeFlow, setActiveFlow, selectedNode, setSelectedNode, events } =
-    useContext(FlowContext);
+  const {
+    selectedFlow,
+    setSelectedFlow,
+    selectedNode,
+    setSelectedNode,
+    selectedEvents,
+  } = useContext(FlowContext);
   const { tripId } = useParams();
   const [nodeName, setNodeName] = useState(
     node.name ? node.name : node.handler?.name
@@ -220,21 +225,21 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
   const [isEditing, setIsEditing] = useState(node.name ? false : true);
 
   // Check if there are events for this node
-  const nodeEvents = events.filter(
+  const nodeEvents = selectedEvents.filter(
     (event) => event.position?.name === (node.name || node.handler?.name)
   );
   const hasEvents = nodeEvents.length > 0;
 
   const updateNodeName = () => {
     setIsEditing(false);
-    if (!activeFlow) return;
-    const updatedNodes = activeFlow.nodes.map((n) => {
+    if (!selectedFlow) return;
+    const updatedNodes = selectedFlow.nodes.map((n) => {
       if (n.id === node.id) {
         n.data.name = nodeName;
       }
       return n;
     });
-    const updatedEdges = activeFlow.edges.map((e) => {
+    const updatedEdges = selectedFlow.edges.map((e) => {
       if (!e.data?.from || !e.data?.to) return e;
       if (e.source === node.id) {
         e.data.from.name = nodeName;
@@ -244,8 +249,8 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
       }
       return e;
     });
-    setActiveFlow({
-      ...activeFlow,
+    setSelectedFlow({
+      ...selectedFlow,
       nodes: updatedNodes,
       edges: updatedEdges,
     });
@@ -267,7 +272,7 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
         radius="xl"
         withBorder
         onClick={() => {
-          const node = activeFlow?.nodes.find((n) => n.id === id);
+          const node = selectedFlow?.nodes.find((n) => n.id === id);
           if (node) {
             setSelectedNode(node);
           }

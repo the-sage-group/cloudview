@@ -6,11 +6,15 @@ import { FlowContext } from "./Context";
 
 export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
   const [opened, setOpened] = useState(false);
-  const { activeFlow, setActiveFlow } = useContext(FlowContext);
+  const { selectedFlow, setSelectedFlow } = useContext(FlowContext);
   const { data: edge, id } = props;
   if (!edge) return null;
-  const sourceNode = activeFlow?.nodes.find((n) => n.id === props.source)?.data;
-  const targetNode = activeFlow?.nodes.find((n) => n.id === props.target)?.data;
+  const sourceNode = selectedFlow?.nodes.find(
+    (n) => n.id === props.source
+  )?.data;
+  const targetNode = selectedFlow?.nodes.find(
+    (n) => n.id === props.target
+  )?.data;
   if (!sourceNode || !targetNode) return null;
 
   return (
@@ -68,7 +72,7 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
                 variant="filled"
                 size="xs"
                 onChange={(value) => {
-                  const updatedEdges = activeFlow?.edges.map((e) => {
+                  const updatedEdges = selectedFlow?.edges.map((e) => {
                     if (e.id === id) {
                       e.data!.label = value;
                       e.data!.from = sourceNode;
@@ -76,8 +80,8 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
                     }
                     return e;
                   });
-                  setActiveFlow({
-                    ...activeFlow,
+                  setSelectedFlow({
+                    ...selectedFlow,
                     edges: updatedEdges,
                   });
                 }}

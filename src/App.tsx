@@ -12,9 +12,21 @@ import {
   Text,
   Box,
 } from "@mantine/core";
-import { Event, FieldDescriptorProto } from "@the-sage-group/awyes-web";
+import {
+  Event,
+  FieldDescriptorProto,
+  Route,
+  Position,
+  Trip,
+  Handler,
+} from "@the-sage-group/awyes-web";
 import { SpotlightActionData, spotlight } from "@mantine/spotlight";
-import { IconPlus, IconFunction, IconArrowRight } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconFunction,
+  IconArrowRight,
+  IconSearch,
+} from "@tabler/icons-react";
 import { useLocation, useParams, useNavigate } from "react-router";
 
 import Flow from "./Flow";
@@ -23,40 +35,70 @@ import Events from "./Events";
 import { Search } from "./Search";
 import { NewNode } from "./NewNode";
 import { NewFlow } from "./NewFlow";
-import { useAwyes, FlowContext } from "./Context";
+import { useAwyes, FlowContext, SearchContext } from "./Context";
 import { FlowGraphType, toFlowGraph, toFlowNode, FlowNodeType } from "./types";
 
 export default function App() {
+  // Awyes
   const service = useAwyes();
+
+  // Routing
+  const location = useLocation();
+  const { routeName } = useParams();
   const navigate = useNavigate();
+  const isEventsView = location.pathname.endsWith("/events");
+
+  // UI Toggle
   const [opened, { toggle }] = useDisclosure();
   const [modalOpened, { open: openModal, close: closeModal }] =
     useDisclosure(false);
+
+  // Search Context
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [handlers, setHandlers] = useState<Handler[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
+
+  // Flow Context
   const [flows, setFlows] = useState<FlowGraphType[]>([]);
   const [actions, setActions] = useState<SpotlightActionData[]>([]);
-  const [activeFlow, setActiveFlow] = useState<FlowGraphType | null>(null);
+  const [selectedEvents, setSelectedEvents] = useState<Event[]>([]);
+  const [selectedFlow, setSelectedFlow] = useState<FlowGraphType | null>(null);
   const [selectedNode, setSelectedNode] = useState<FlowNodeType | null>(null);
-
-  const location = useLocation();
-  const { routeName } = useParams();
-  const isEventsView = location.pathname.endsWith("/events");
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [{ response: handlerResponse }, { response: routeResponse }] =
-          await Promise.all([service.listHandlers({}), service.listRoutes({})]);
+        const [
+          { response: tripResponse },
+          { response: eventResponse },
+          { response: routeResponse },
+          { response: handlerResponse },
+          { response: positionResponse },
+        ] = await Promise.all([
+          service.listTrips({}),
+          service.listEvents({}),
+          service.listRoutes({}),
+          service.listHandlers({}),
+          service.listPositions({}),
+        ]);
+        setTrips(tripResponse.trips);
+        setEvents(eventResponse.events);
+        setRoutes(routeResponse.routes);
+        setHandlers(handlerResponse.handlers);
+        setPositions(positionResponse.positions);
+
         const flows = routeResponse.routes.map(toFlowGraph);
         setFlows(flows);
 
         if (routeName) {
           const matchingFlow = flows.find((flow) => flow.name === routeName);
-          setActiveFlow(matchingFlow || null);
+          setSelectedFlow(matchingFlow || null);
         } else if (location.pathname === "/") {
-          setActiveFlow(null);
-        } else if (!activeFlow) {
-          setActiveFlow(flows[0]);
+          setSelectedFlow(null);
+        } else if (!selectedFlow) {
+          setSelectedFlow(flows[0]);
         }
 
         setActions(
@@ -65,7 +107,7 @@ export default function App() {
             label: `${handler.context}.${handler.name}`,
             description: handler.description,
             onClick: () => {
-              setActiveFlow((currentFlow: FlowGraphType | null) => {
+              setSelectedFlow((currentFlow: FlowGraphType | null) => {
                 if (currentFlow) {
                   return {
                     ...currentFlow,
@@ -99,19 +141,21 @@ export default function App() {
       parameters,
     };
     setFlows([...flows, newFlow]);
-    setActiveFlow(newFlow);
+    setSelectedFlow(newFlow);
     navigate(`/route/${name}`);
   };
 
   return (
     <FlowContext.Provider
       value={{
-        activeFlow,
-        setActiveFlow,
+        flows,
+        setFlows,
+        selectedFlow,
+        setSelectedFlow,
         selectedNode,
         setSelectedNode,
-        events,
-        setEvents,
+        selectedEvents,
+        setSelectedEvents,
       }}
     >
       <AppShell
@@ -157,27 +201,77 @@ export default function App() {
               justifyContent: "center",
             }}
           >
-            <Search />
+            <SearchContext.Provider
+              value={{
+                trips,
+                events,
+                routes,
+                handlers,
+                positions,
+                setTrips,
+                setEvents,
+                setRoutes,
+                setHandlers,
+                setPositions,
+              }}
+            >
+              <Group
+                gap="xs"
+                style={{
+                  cursor: "pointer",
+                  padding: "8px 16px",
+                  borderRadius: "var(--mantine-radius-md)",
+                  border: "1px solid var(--mantine-color-blue-2)",
+                  width: "500px",
+                  backgroundColor: "white",
+                  boxShadow: "0 2px 4px rgba(37, 99, 235, 0.05)",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "var(--mantine-color-blue-0)",
+                    borderColor: "var(--mantine-color-blue-4)",
+                    boxShadow: "0 4px 8px rgba(37, 99, 235, 0.1)",
+                    transform: "translateY(-1px)",
+                  },
+                }}
+                onClick={() => spotlight.open()}
+              >
+                <IconSearch
+                  size={18}
+                  style={{ color: "var(--mantine-color-blue-6)" }}
+                />
+                <Text
+                  size="sm"
+                  style={{ color: "var(--mantine-color-gray-7)", flex: 1 }}
+                >
+                  Search everything...
+                </Text>
+                <Text
+                  size="xs"
+                  style={{
+                    padding: "4px 8px",
+                    backgroundColor: "var(--mantine-color-blue-0)",
+                    border: "1px solid var(--mantine-color-blue-2)",
+                    borderRadius: "4px",
+                    color: "var(--mantine-color-blue-7)",
+                    fontWeight: 500,
+                  }}
+                >
+                  ⌘K
+                </Text>
+              </Group>
+              <Search />
+            </SearchContext.Provider>
           </Box>
 
           <Group gap="sm" style={{ flex: "0 0 auto", marginLeft: "2rem" }}>
-            <NewNode actions={actions} />
             <Button
-              variant="subtle"
+              variant="light"
               size="sm"
+              disabled={!selectedFlow || selectedEvents.length > 0}
               onClick={openModal}
               leftSection={<IconPlus size={16} />}
             >
               New Flow
-            </Button>
-            <Button
-              variant="light"
-              size="sm"
-              disabled={!activeFlow || events.length > 0}
-              onClick={() => spotlight.open()}
-              leftSection={<IconPlus size={16} />}
-            >
-              Add Node
             </Button>
           </Group>
         </AppShell.Header>
@@ -206,7 +300,7 @@ export default function App() {
                   key={index}
                   label={flow.name}
                   rightSection={<IconArrowRight size={16} />}
-                  active={flow === activeFlow}
+                  active={flow === selectedFlow}
                   onClick={() => {
                     navigate(`/route/${flow.name}`);
                   }}
@@ -223,7 +317,7 @@ export default function App() {
         </AppShell.Navbar>
 
         <AppShell.Main>
-          {!activeFlow ? (
+          {!selectedFlow ? (
             <div
               style={{
                 height: "100%",

@@ -48,41 +48,46 @@ export default function Flow() {
   const { tripId } = useParams();
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdgeType>([]);
-  const { activeFlow, setActiveFlow, selectedNode, events, setEvents } =
-    useContext(FlowContext);
+  const {
+    selectedFlow,
+    setSelectedFlow,
+    selectedNode,
+    selectedEvents,
+    setSelectedEvents,
+  } = useContext(FlowContext);
   const [showState, setShowState] = useState(false);
   const [showEvents, setShowEvents] = useState(false);
 
-  console.log(events);
-  if (!activeFlow) return null;
+  console.log(selectedEvents);
+  if (!selectedFlow) return null;
 
   useEffect(() => {
     setNodes([
       ...nodes,
-      ...activeFlow.nodes.filter(
+      ...selectedFlow.nodes.filter(
         (n) => !nodes.some((node) => node.id === n.id)
       ),
     ]);
     setEdges([
       ...edges,
-      ...activeFlow.edges.filter(
+      ...selectedFlow.edges.filter(
         (e) => !edges.some((edge) => edge.id === e.id)
       ),
     ]);
     (async () => {
       try {
         await client.registerRoute({
-          route: toRouteProto(activeFlow),
+          route: toRouteProto(selectedFlow),
         });
       } catch (error) {
         console.error("Failed to save route:", error);
       }
     })();
-  }, [activeFlow]);
+  }, [selectedFlow]);
 
   useEffect(() => {
     if (!tripId) {
-      setEvents([]);
+      setSelectedEvents([]);
       return;
     }
 
@@ -92,7 +97,7 @@ export default function Flow() {
     subscription.responses.onNext((event) => {
       if (!event) return;
 
-      setEvents((prev) => [
+      setSelectedEvents((prev) => [
         ...prev.filter((e) => e.timestamp !== event.timestamp),
         event,
       ]);
@@ -113,10 +118,10 @@ export default function Flow() {
     const deletions = changes.filter((change) => change.type === "remove");
     if (deletions.length > 0) {
       const deletedIds = new Set(deletions.map((d) => d.id));
-      setActiveFlow({
-        ...activeFlow,
-        nodes: activeFlow.nodes.filter((node) => !deletedIds.has(node.id)),
-        edges: activeFlow.edges.filter(
+      setSelectedFlow({
+        ...selectedFlow,
+        nodes: selectedFlow.nodes.filter((node) => !deletedIds.has(node.id)),
+        edges: selectedFlow.edges.filter(
           (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
         ),
       });
@@ -126,7 +131,7 @@ export default function Flow() {
   const startTrip = async () => {
     try {
       const { response } = await client.startTrip({
-        route: toRouteProto(activeFlow),
+        route: toRouteProto(selectedFlow),
         state: {},
       });
       navigate(`/trip/${response.trip?.id}`);
@@ -157,9 +162,9 @@ export default function Flow() {
               label: "",
             },
           };
-          setActiveFlow({
-            ...activeFlow,
-            edges: [...activeFlow.edges, newEdge],
+          setSelectedFlow({
+            ...selectedFlow,
+            edges: [...selectedFlow.edges, newEdge],
           });
         }}
         onNodesChange={handleNodesChange}
@@ -180,7 +185,7 @@ export default function Flow() {
         >
           <Group
             justify="space-between"
-            mb={activeFlow.parameters.length > 0 ? "xs" : 0}
+            mb={selectedFlow.parameters.length > 0 ? "xs" : 0}
           >
             <Group gap="xs">
               <IconArrowsRandom
@@ -188,10 +193,10 @@ export default function Flow() {
                 style={{ color: "var(--mantine-color-blue-6)" }}
               />
               <Title order={4} style={{ margin: 0 }}>
-                {activeFlow.name}
+                {selectedFlow.name}
               </Title>
             </Group>
-            {tripId && events.length > 0 && (
+            {tripId && selectedEvents.length > 0 && (
               <Button
                 variant="subtle"
                 size="compact-sm"
@@ -203,13 +208,13 @@ export default function Flow() {
             )}
           </Group>
 
-          {activeFlow.parameters.length > 0 && (
+          {selectedFlow.parameters.length > 0 && (
             <>
               <Text size="sm" c="dimmed" mb="xs">
                 Parameters
               </Text>
               <Group gap="xs">
-                {activeFlow.parameters.map(
+                {selectedFlow.parameters.map(
                   (param: FieldDescriptorProto, index: number) => (
                     <Badge key={index} variant="dot" color="blue">
                       {param.name}
@@ -250,7 +255,7 @@ export default function Flow() {
         )}
       </ReactFlow>
 
-      {tripId && events.length > 0 && (
+      {tripId && selectedEvents.length > 0 && (
         <Paper
           shadow="sm"
           radius="md"
@@ -289,7 +294,7 @@ export default function Flow() {
               <Text size="sm" c="dimmed">
                 {
                   Object.keys(
-                    events.reduce(
+                    selectedEvents.reduce(
                       (acc, event) => ({ ...acc, ...event.state }),
                       {}
                     )
@@ -323,7 +328,7 @@ export default function Flow() {
                 </Table.Thead>
                 <Table.Tbody>
                   {Object.entries(
-                    events.reduce(
+                    selectedEvents.reduce(
                       (acc, event) => ({ ...acc, ...event.state }),
                       {}
                     )
