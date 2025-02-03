@@ -16,7 +16,9 @@ createRoot(document.getElementById("root")!).render(
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<App />} />
-            <Route path="/:route" element={<App />} />
+            <Route path="/route/:routeName" element={<App />} />
+            <Route path="/trip/:tripId" element={<App />} />
+            <Route path="/trip/:tripId/events" element={<App />} />
           </Routes>
         </BrowserRouter>
       </AwyesProvider>

@@ -4,7 +4,6 @@ import { Edge, Node } from "@xyflow/react";
 import { Route, Position, Transition } from "@the-sage-group/awyes-web";
 
 // Define interfaces that extend the AwYes types with IDs
-
 export type FlowNodeType = Node<Position & Record<string, any>, "flowNode">;
 export type FlowEdgeType = Edge<Transition & Record<string, any>, "flowEdge">;
 export type FlowGraphType = Omit<Route, "positions" | "transitions"> & {

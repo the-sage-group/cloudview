@@ -10,26 +10,37 @@ import {
   Group,
   Title,
   Text,
+  Box,
 } from "@mantine/core";
-import { FieldDescriptorProto } from "@the-sage-group/awyes-web";
+import { Event, FieldDescriptorProto } from "@the-sage-group/awyes-web";
 import { SpotlightActionData, spotlight } from "@mantine/spotlight";
 import { IconPlus, IconFunction, IconArrowRight } from "@tabler/icons-react";
+import { useLocation, useParams, useNavigate } from "react-router";
 
 import Flow from "./Flow";
+import Events from "./Events";
+
 import { Search } from "./Search";
+import { NewNode } from "./NewNode";
 import { NewFlow } from "./NewFlow";
 import { useAwyes, FlowContext } from "./Context";
 import { FlowGraphType, toFlowGraph, toFlowNode, FlowNodeType } from "./types";
 
 export default function App() {
   const service = useAwyes();
+  const navigate = useNavigate();
   const [opened, { toggle }] = useDisclosure();
   const [modalOpened, { open: openModal, close: closeModal }] =
     useDisclosure(false);
+  const [events, setEvents] = useState<Event[]>([]);
   const [flows, setFlows] = useState<FlowGraphType[]>([]);
   const [actions, setActions] = useState<SpotlightActionData[]>([]);
   const [activeFlow, setActiveFlow] = useState<FlowGraphType | null>(null);
   const [selectedNode, setSelectedNode] = useState<FlowNodeType | null>(null);
+
+  const location = useLocation();
+  const { routeName } = useParams();
+  const isEventsView = location.pathname.endsWith("/events");
 
   useEffect(() => {
     async function fetchData() {
@@ -38,7 +49,16 @@ export default function App() {
           await Promise.all([service.listHandlers({}), service.listRoutes({})]);
         const flows = routeResponse.routes.map(toFlowGraph);
         setFlows(flows);
-        setActiveFlow(flows[0]);
+
+        if (routeName) {
+          const matchingFlow = flows.find((flow) => flow.name === routeName);
+          setActiveFlow(matchingFlow || null);
+        } else if (location.pathname === "/") {
+          setActiveFlow(null);
+        } else if (!activeFlow) {
+          setActiveFlow(flows[0]);
+        }
+
         setActions(
           handlerResponse.handlers.map((handler) => ({
             id: uuidv4(),
@@ -63,7 +83,7 @@ export default function App() {
       }
     }
     fetchData();
-  }, []);
+  }, [routeName, location.pathname]);
 
   const handleCreateFlow = (
     name: string,
@@ -80,12 +100,22 @@ export default function App() {
     };
     setFlows([...flows, newFlow]);
     setActiveFlow(newFlow);
+    navigate(`/route/${name}`);
   };
 
   return (
-    <FlowContext.Provider value={{ activeFlow, setActiveFlow, selectedNode, setSelectedNode }}>
+    <FlowContext.Provider
+      value={{
+        activeFlow,
+        setActiveFlow,
+        selectedNode,
+        setSelectedNode,
+        events,
+        setEvents,
+      }}
+    >
       <AppShell
-        header={{ height: 50 }}
+        header={{ height: 60 }}
         padding="md"
         navbar={{
           width: 300,
@@ -99,33 +129,51 @@ export default function App() {
         }}
       >
         <AppShell.Header
-          p="md"
+          p="xs"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "1rem",
-            justifyContent: "space-between",
             borderBottom: "1px solid var(--mantine-color-gray-2)",
             background: "var(--mantine-color-white)",
+            height: "60px",
           }}
         >
-          <Group gap="lg">
+          <Group gap="xl" style={{ flex: "0 0 auto", marginRight: "2rem" }}>
             <Burger opened={!opened} onClick={toggle} size="sm" />
-            <Title order={3} style={{ margin: 0, fontWeight: 600 }}>
+            <Title
+              order={3}
+              style={{ margin: 0, fontWeight: 600, whiteSpace: "nowrap" }}
+            >
               CloudView
             </Title>
           </Group>
-          <Group gap="md">
-            <Search actions={actions} />
+
+          <Box
+            style={{
+              flex: "1 1 auto",
+              maxWidth: "800px",
+              margin: "0 auto",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <Search />
+          </Box>
+
+          <Group gap="sm" style={{ flex: "0 0 auto", marginLeft: "2rem" }}>
+            <NewNode actions={actions} />
             <Button
-              variant="outline"
+              variant="subtle"
+              size="sm"
               onClick={openModal}
               leftSection={<IconPlus size={16} />}
             >
               New Flow
             </Button>
             <Button
-              disabled={!activeFlow}
+              variant="light"
+              size="sm"
+              disabled={!activeFlow || events.length > 0}
               onClick={() => spotlight.open()}
               leftSection={<IconPlus size={16} />}
             >
@@ -159,7 +207,9 @@ export default function App() {
                   label={flow.name}
                   rightSection={<IconArrowRight size={16} />}
                   active={flow === activeFlow}
-                  onClick={() => setActiveFlow(flow)}
+                  onClick={() => {
+                    navigate(`/route/${flow.name}`);
+                  }}
                   styles={{
                     root: {
                       borderRadius: "var(--mantine-radius-sm)",
@@ -173,9 +223,7 @@ export default function App() {
         </AppShell.Navbar>
 
         <AppShell.Main>
-          {activeFlow ? (
-            <Flow />
-          ) : (
+          {!activeFlow ? (
             <div
               style={{
                 height: "100%",
@@ -199,6 +247,10 @@ export default function App() {
                 Create New Flow
               </Button>
             </div>
+          ) : isEventsView ? (
+            <Events />
+          ) : (
+            <Flow />
           )}
         </AppShell.Main>
       </AppShell>

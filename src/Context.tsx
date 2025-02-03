@@ -1,10 +1,12 @@
-import { AwyesClient } from "@the-sage-group/awyes-web";
+import { AwyesClient, Event } from "@the-sage-group/awyes-web";
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport";
 import { createContext, useContext, ReactNode } from "react";
 import { FlowGraphType, FlowNodeType } from "./types";
 
 // Flow Context
 type FlowContextType = {
+  events: Event[];
+  setEvents: React.Dispatch<React.SetStateAction<Event[]>>;
   activeFlow: FlowGraphType | null;
   setActiveFlow: React.Dispatch<React.SetStateAction<FlowGraphType | null>>;
   selectedNode: FlowNodeType | null;
@@ -12,6 +14,8 @@ type FlowContextType = {
 };
 
 export const FlowContext = createContext<FlowContextType>({
+  events: [],
+  setEvents: () => {},
   activeFlow: null,
   setActiveFlow: () => {},
   selectedNode: null,

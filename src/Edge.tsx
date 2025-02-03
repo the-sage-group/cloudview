@@ -1,7 +1,6 @@
 import { useContext, useState } from "react";
 import { BezierEdge, EdgeProps } from "@xyflow/react";
 import { Popover, Autocomplete, Badge, rem } from "@mantine/core";
-
 import { FlowEdgeType } from "./types";
 import { FlowContext } from "./Context";
 
@@ -43,9 +42,9 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
               <Badge
                 variant={edge.label ? "light" : "outline"}
                 color={
-                  edge.label === "Success"
+                  edge.label === "SUCCESS"
                     ? "green"
-                    : edge.label === "Error"
+                    : edge.label === "FAILURE"
                     ? "red"
                     : "gray"
                 }
@@ -63,7 +62,7 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
             </Popover.Target>
             <Popover.Dropdown p="xs">
               <Autocomplete
-                data={["Success", "Error"]}
+                data={["SUCCESS", "FAILURE"]}
                 placeholder="Add edge label"
                 value={edge.label || ""}
                 variant="filled"
