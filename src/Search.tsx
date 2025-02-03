@@ -1,26 +1,44 @@
 import { useContext } from "react";
 import { Spotlight, SpotlightActionData } from "@mantine/spotlight";
-import {
-  IconSearch,
-  IconRoute,
-  IconMapPin,
-  IconBolt,
-} from "@tabler/icons-react";
+import { IconSearch, IconRoute, IconBolt, IconUser } from "@tabler/icons-react";
 import { SearchContext, FlowContext } from "./Context";
-import { Route, Position, Handler } from "@the-sage-group/awyes-web";
+import {
+  Route,
+  Handler,
+  Trip,
+  EntityType,
+  Entity,
+} from "@the-sage-group/awyes-web";
 import { useNavigate } from "react-router";
 import { toFlowNode } from "./types";
 
 export function Search() {
   const navigate = useNavigate();
-  const { setSelectedNode, flows, setSelectedFlow, selectedFlow } =
+  const { setSelectedNode, setSelectedFlow, selectedFlow, flows } =
     useContext(FlowContext);
-  const { routes, handlers, positions } = useContext(SearchContext);
+  const { routes, handlers, trips } = useContext(SearchContext);
 
-  const findRouteByPosition = (positionName: string): Route | undefined => {
-    return routes.find((route) =>
-      route.positions?.some((pos) => pos.name === positionName)
-    );
+  // Get unique entities from trips
+  const entities = Array.from(
+    new Set(
+      trips
+        .filter((trip) => trip.entity?.name && trip.entity?.type != null)
+        .map((trip) => JSON.stringify(trip.entity))
+    )
+  ).map((entity) => JSON.parse(entity));
+
+  const mapEntity = (entity: Entity): SpotlightActionData => {
+    const type = EntityType[entity.type ?? 0];
+    const name = entity.name ?? "";
+    return {
+      id: `${name}-${type}`,
+      label: `${type}:${name}`,
+      leftSection: <IconUser size={18} />,
+      group: "Entities",
+      onClick: () => {
+        navigate(`/trips?entity=${type}:${name}`);
+      },
+    };
   };
 
   const mapRoute = (route: Route): SpotlightActionData => ({
@@ -31,39 +49,12 @@ export function Search() {
     group: "Routes",
     onClick: () => {
       if (route.name) {
+        const matchingFlow = flows.find((flow) => flow.name === route.name);
+        setSelectedFlow(matchingFlow || null);
         navigate(`/route/${route.name}`);
       }
     },
   });
-
-  const mapPosition = (position: Position): SpotlightActionData => {
-    const route = position.name
-      ? findRouteByPosition(position.name)
-      : undefined;
-    return {
-      id: position.name || "",
-      label: position.name || "",
-      description: route?.name ? `Route: ${route.name}` : "",
-      leftSection: <IconMapPin size={18} />,
-      group: "Positions",
-      onClick: () => {
-        if (route?.name) {
-          navigate(`/route/${route.name}`);
-
-          // Find the node in the flow, then set it as the selected node
-          const matchingFlow = flows.find((flow) => flow.name === route.name);
-          if (matchingFlow) {
-            const matchingNode = matchingFlow.nodes.find(
-              (node) => node.data.name === position.name
-            );
-            if (matchingNode) {
-              setSelectedNode(matchingNode);
-            }
-          }
-        }
-      },
-    };
-  };
 
   const mapHandler = (handler: Handler): SpotlightActionData => {
     const context = handler.context || "";
@@ -76,10 +67,8 @@ export function Search() {
       group: "Handlers",
       onClick: () => {
         if (selectedFlow) {
-          const newNode = toFlowNode({
-            name: `${context}.${name}`,
-            handler: handler,
-          });
+          const newNode = toFlowNode({ handler });
+          setSelectedNode(newNode);
           setSelectedFlow({
             ...selectedFlow,
             nodes: [...selectedFlow.nodes, newNode],
@@ -89,30 +78,21 @@ export function Search() {
     };
   };
 
-  const actions: SpotlightActionData[] = [
-    ...routes.map(mapRoute),
-    ...positions.map(mapPosition),
-    ...handlers.map(mapHandler),
-  ];
-
   return (
     <Spotlight
-      actions={actions}
+      actions={[
+        ...routes.map(mapRoute),
+        ...handlers.map(mapHandler),
+        ...entities.map(mapEntity),
+      ]}
       searchProps={{
-        placeholder: "Search routes, positions, handlers...",
+        placeholder: "Search for anything...",
         leftSection: <IconSearch size={16} style={{ color: "#228be6" }} />,
       }}
       shortcut="mod + k"
       nothingFound="Nothing found..."
       highlightQuery
       scrollable
-      styles={{
-        action: {
-          "&[data-selected]": {
-            backgroundColor: "#e7f5ff",
-          },
-        },
-      }}
     />
   );
 }

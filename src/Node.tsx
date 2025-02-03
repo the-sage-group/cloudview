@@ -6,9 +6,7 @@ import {
   Badge,
   TextInput,
   Group,
-  Timeline,
   Code,
-  Collapse,
 } from "@mantine/core";
 import {
   FieldDescriptorProto_Label,
@@ -19,11 +17,6 @@ import { useContext, useState } from "react";
 import { useParams } from "react-router";
 import { FlowNodeType } from "./types";
 import { FlowContext } from "./Context";
-import {
-  IconCircleDot,
-  IconChevronDown,
-  IconChevronRight,
-} from "@tabler/icons-react";
 
 export function SelectedNode() {
   const { selectedNode, selectedEvents } = useContext(FlowContext);
@@ -118,48 +111,38 @@ export function SelectedNode() {
             <Text size="sm" fw={600} c="dimmed" mb={4}>
               Events
             </Text>
-            <Timeline
-              active={nodeEvents.length - 1}
-              bulletSize={24}
-              lineWidth={2}
-            >
-              {nodeEvents.map((event, index) => {
-                const [showState, setShowState] = useState(false);
-                const hasState = Object.keys(event.state).length > 0;
-
-                return (
-                  <Timeline.Item
-                    key={index}
-                    bullet={<IconCircleDot size={12} />}
-                    title={
-                      <Group justify="space-between" wrap="nowrap">
-                        <Text size="sm" fw={500} c="dark.4">
-                          {event.label || "Event"}
-                        </Text>
-                        {hasState && (
-                          <Badge
-                            variant="light"
-                            color="blue"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowState(!showState);
-                            }}
-                            style={{ cursor: "pointer" }}
-                            rightSection={
-                              showState ? (
-                                <IconChevronDown size={12} />
-                              ) : (
-                                <IconChevronRight size={12} />
-                              )
-                            }
-                          >
-                            State
-                          </Badge>
-                        )}
-                      </Group>
-                    }
-                  >
+            <Stack gap="xs">
+              {nodeEvents.map((event, index) => (
+                <Paper
+                  key={index}
+                  withBorder
+                  p="md"
+                  radius="md"
+                  style={{
+                    borderLeft: `4px solid ${
+                      event.label === "SUCCESS"
+                        ? "var(--mantine-color-green-6)"
+                        : event.label === "FAILURE"
+                        ? "var(--mantine-color-red-6)"
+                        : "var(--mantine-color-blue-6)"
+                    }`,
+                  }}
+                >
+                  <Group justify="space-between" mb="md">
+                    <Group gap="xs">
+                      <Badge
+                        variant="light"
+                        color={
+                          event.label === "SUCCESS"
+                            ? "green"
+                            : event.label === "FAILURE"
+                            ? "red"
+                            : "blue"
+                        }
+                      >
+                        {event.label || "N/A"}
+                      </Badge>
+                    </Group>
                     <Text size="xs" c="dimmed">
                       {event.timestamp
                         ? new Date(Number(event.timestamp)).toLocaleString(
@@ -171,37 +154,27 @@ export function SelectedNode() {
                           )
                         : ""}
                     </Text>
-                    {event.message && (
-                      <Text size="sm" mt={4} c="dark.3">
-                        {event.message}
-                      </Text>
+                  </Group>
+                  {event.message && (
+                    <Text size="sm" mb="xs" c="dark.3">
+                      {event.message}
+                    </Text>
+                  )}
+                  <Code block style={{ maxHeight: "200px", overflow: "auto" }}>
+                    {JSON.stringify(
+                      Object.fromEntries(
+                        Object.entries(event.state).map(([key, value]) => [
+                          key,
+                          Value.toJson(value as Value),
+                        ])
+                      ),
+                      null,
+                      2
                     )}
-                    {hasState && (
-                      <Collapse in={showState}>
-                        <Code
-                          block
-                          mt="xs"
-                          style={{ maxHeight: "200px", overflow: "auto" }}
-                        >
-                          {JSON.stringify(
-                            Object.fromEntries(
-                              Object.entries(event.state).map(
-                                ([key, value]) => [
-                                  key,
-                                  Value.toJson(value as Value),
-                                ]
-                              )
-                            ),
-                            null,
-                            2
-                          )}
-                        </Code>
-                      </Collapse>
-                    )}
-                  </Timeline.Item>
-                );
-              })}
-            </Timeline>
+                  </Code>
+                </Paper>
+              ))}
+            </Stack>
           </div>
         )}
       </Stack>
@@ -260,12 +233,8 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
 
   return (
     <div style={{ position: "relative" }}>
-      <Handle type="target" position={Position.Top} style={{ left: "50%" }} />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={{ left: "50%" }}
-      />
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
       <Paper
         shadow="sm"
         p="md"
@@ -283,9 +252,10 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
           width: "fit-content",
           cursor: "pointer",
           background: hasEvents
-            ? "var(--mantine-color-blue-0)"
+            ? "var(--mantine-color-blue-1)"
             : "var(--mantine-color-white)",
           borderColor: isSelected ? "var(--mantine-color-blue-6)" : undefined,
+          borderWidth: isSelected ? "3px" : "1px",
         }}
       >
         <Stack gap="xs" align="center" style={{ width: "100%" }}>
@@ -306,8 +276,8 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
             />
           ) : (
             <Text
-              size="sm"
-              fw={600}
+              size="lg"
+              fw={700}
               ta="center"
               onDoubleClick={(e) => {
                 if (!tripId) {
@@ -323,22 +293,6 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
               {nodeName}
             </Text>
           )}
-          <Badge
-            variant="dot"
-            color="violet"
-            size="sm"
-            styles={{
-              root: {
-                maxWidth: "100%",
-                whiteSpace: "normal",
-                height: "auto",
-                padding: "4px 8px",
-                textAlign: "center",
-              },
-            }}
-          >
-            {`${node.handler?.context}.${node.handler?.name}`}
-          </Badge>
         </Stack>
       </Paper>
     </div>

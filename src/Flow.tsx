@@ -8,6 +8,8 @@ import {
   Background,
   BackgroundVariant,
   NodeChange,
+  EdgeChange,
+  Controls,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
@@ -19,19 +21,34 @@ import {
   Button,
   ScrollArea,
   Table,
+  Code,
+  Modal,
+  Stack,
+  TextInput,
+  Combobox,
+  InputBase,
+  useCombobox,
+  Tooltip,
 } from "@mantine/core";
 import {
-  IconArrowsRandom,
   IconPlayerPlay,
   IconChevronUp,
   IconHistory,
+  IconBrandGithub,
+  IconSearch,
+  IconUser,
 } from "@tabler/icons-react";
-import { FieldDescriptorProto, Value } from "@the-sage-group/awyes-web";
+import {
+  EntityType,
+  FieldDescriptorProto,
+  Value,
+  Entity,
+} from "@the-sage-group/awyes-web";
 import { useNavigate } from "react-router";
 
 import { FlowNode, SelectedNode } from "./Node";
 import { FlowEdge } from "./Edge";
-import { FlowContext, useAwyes } from "./Context";
+import { FlowContext, useAwyes, SearchContext } from "./Context";
 import { FlowNodeType, FlowEdgeType, toRouteProto } from "./types";
 
 const nodeTypes = {
@@ -54,26 +71,23 @@ export default function Flow() {
     selectedNode,
     selectedEvents,
     setSelectedEvents,
+    setSelectedNode,
   } = useContext(FlowContext);
+  const { repositories } = useContext(SearchContext);
+  const combobox = useCombobox({
+    onDropdownClose: () => combobox.resetSelectedOption(),
+  });
   const [showState, setShowState] = useState(false);
-  const [showEvents, setShowEvents] = useState(false);
+  const [executeModalOpen, setExecuteModalOpen] = useState(false);
+  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
+  const [searchValue, setSearchValue] = useState("");
+  const [paramValues, setParamValues] = useState<Record<string, string>>({});
 
-  console.log(selectedEvents);
   if (!selectedFlow) return null;
 
   useEffect(() => {
-    setNodes([
-      ...nodes,
-      ...selectedFlow.nodes.filter(
-        (n) => !nodes.some((node) => node.id === n.id)
-      ),
-    ]);
-    setEdges([
-      ...edges,
-      ...selectedFlow.edges.filter(
-        (e) => !edges.some((edge) => edge.id === e.id)
-      ),
-    ]);
+    setNodes(selectedFlow.nodes);
+    setEdges(selectedFlow.edges);
     (async () => {
       try {
         await client.registerRoute({
@@ -128,16 +142,39 @@ export default function Flow() {
     }
   };
 
-  const startTrip = async () => {
+  const handleEdgesChange = (changes: EdgeChange<FlowEdgeType>[]) => {
+    onEdgesChange(changes);
+
+    const deletions = changes.filter((change) => change.type === "remove");
+    if (deletions.length > 0) {
+      const deletedIds = new Set(deletions.map((d) => d.id));
+      setSelectedFlow({
+        ...selectedFlow,
+        edges: selectedFlow.edges.filter((edge) => !deletedIds.has(edge.id)),
+      });
+    }
+  };
+
+  const handleExecute = async () => {
+    if (!selectedEntity) return;
+
     try {
       const { response } = await client.startTrip({
         route: toRouteProto(selectedFlow),
         state: {},
+        entity: selectedEntity,
       });
       navigate(`/trip/${response.trip?.id}`);
+      setExecuteModalOpen(false);
     } catch (error) {
       console.error("Failed to execute flow:", error);
     }
+  };
+
+  const handleOpenExecuteModal = () => {
+    setSelectedEntity(null);
+    setParamValues({});
+    setExecuteModalOpen(true);
   };
 
   return (
@@ -149,6 +186,7 @@ export default function Flow() {
         minZoom={0.1}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onPaneClick={() => setSelectedNode(null)}
         onConnect={(connection) => {
           if (tripId) return;
           const id = uuid();
@@ -168,11 +206,17 @@ export default function Flow() {
           });
         }}
         onNodesChange={handleNodesChange}
-        onEdgesChange={onEdgesChange}
+        onEdgesChange={handleEdgesChange}
       >
+        <Controls
+          showZoom={false}
+          showInteractive={false}
+          showFitView={true}
+          position="bottom-left"
+        />
         <Paper
           shadow="sm"
-          p="md"
+          p="xl"
           radius="md"
           withBorder
           style={{
@@ -181,48 +225,167 @@ export default function Flow() {
             left: "20px",
             zIndex: 5,
             maxWidth: "400px",
+            backgroundColor: "var(--mantine-color-body)",
           }}
         >
           <Group
             justify="space-between"
-            mb={selectedFlow.parameters.length > 0 ? "xs" : 0}
+            mb={selectedFlow.parameters.length > 0 ? "lg" : 0}
           >
             <Group gap="xs">
-              <IconArrowsRandom
-                size={20}
-                style={{ color: "var(--mantine-color-blue-6)" }}
-              />
+              {tripId && selectedEvents[0]?.entity && (
+                <Tooltip
+                  label={
+                    <Stack gap={2}>
+                      <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
+                        Entity
+                      </Text>
+                      <Group gap="xs">
+                        <Text size="sm" fw={500}>
+                          {selectedEvents[0].entity.type != null
+                            ? EntityType[selectedEvents[0].entity.type]
+                                .split("_")
+                                .map(
+                                  (word: string) =>
+                                    word.charAt(0).toUpperCase() +
+                                    word.slice(1).toLowerCase()
+                                )
+                                .join(" ")
+                            : "Unknown Type"}
+                        </Text>
+                        <Text size="sm" c="dimmed">
+                          ·
+                        </Text>
+                        <Text size="sm">{selectedEvents[0].entity.name}</Text>
+                      </Group>
+                    </Stack>
+                  }
+                  position="right"
+                  withArrow
+                  arrowSize={6}
+                >
+                  {(() => {
+                    switch (selectedEvents[0].entity.type) {
+                      case EntityType.REPOSITORY:
+                        return (
+                          <IconBrandGithub
+                            style={{
+                              width: 20,
+                              height: 20,
+                              color: "var(--mantine-color-blue-6)",
+                            }}
+                            stroke={1.5}
+                          />
+                        );
+                      case EntityType.USER:
+                        return (
+                          <IconUser
+                            style={{
+                              width: 20,
+                              height: 20,
+                              color: "var(--mantine-color-blue-6)",
+                            }}
+                            stroke={1.5}
+                          />
+                        );
+                      default:
+                        return (
+                          <IconUser
+                            style={{
+                              width: 20,
+                              height: 20,
+                              color: "var(--mantine-color-blue-6)",
+                            }}
+                            stroke={1.5}
+                          />
+                        );
+                    }
+                  })()}
+                </Tooltip>
+              )}
               <Title order={4} style={{ margin: 0 }}>
                 {selectedFlow.name}
               </Title>
+              {tripId && selectedEvents.length > 0 && (
+                <Button
+                  variant="subtle"
+                  size="compact-sm"
+                  rightSection={<IconHistory size={16} />}
+                  onClick={() => navigate(`/trip/${tripId}/events`)}
+                >
+                  View Events
+                </Button>
+              )}
             </Group>
             {tripId && selectedEvents.length > 0 && (
-              <Button
-                variant="subtle"
-                size="compact-sm"
-                rightSection={<IconHistory size={16} />}
-                onClick={() => navigate(`/trip/${tripId}/events`)}
-              >
-                View Events
-              </Button>
+              <Stack gap="xs" mt="xs">
+                {selectedEvents[0] && (
+                  <Group gap="xs">
+                    <Text size="sm" fw={500}>Started:</Text>
+                    <Text size="sm" c="dimmed">
+                      {new Date(Number(selectedEvents[0].timestamp!)).toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                      }).replace(/(\d+)\/(\d+)\/(\d+)/, '$3/$1/$2')}
+                    </Text>
+                  </Group>
+                )}
+                {selectedEvents.length > 1 && selectedEvents[selectedEvents.length - 1].label === 'SUCCESS' && (
+                  <>
+                    <Group gap="xs">
+                      <Text size="sm" fw={500}>Completed:</Text>
+                      <Text size="sm" c="dimmed">
+                        {new Date(Number(selectedEvents[selectedEvents.length - 1].timestamp!)).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                          hour12: false
+                        }).replace(/(\d+)\/(\d+)\/(\d+)/, '$3/$1/$2')}
+                      </Text>
+                    </Group>
+                    <Group gap="xs">
+                      <Text size="sm" fw={500}>Duration:</Text>
+                      <Text size="sm" c="dimmed">
+                        {((Number(selectedEvents[selectedEvents.length - 1].timestamp) - Number(selectedEvents[0].timestamp)) / 1000).toFixed(1)}s
+                      </Text>
+                    </Group>
+                  </>
+                )}
+              </Stack>
             )}
           </Group>
 
           {selectedFlow.parameters.length > 0 && (
-            <>
-              <Text size="sm" c="dimmed" mb="xs">
-                Parameters
-              </Text>
-              <Group gap="xs">
-                {selectedFlow.parameters.map(
-                  (param: FieldDescriptorProto, index: number) => (
-                    <Badge key={index} variant="dot" color="blue">
-                      {param.name}
-                    </Badge>
-                  )
-                )}
-              </Group>
-            </>
+            <Stack gap="lg">
+              <div>
+                <Text size="sm" fw={600} tt="uppercase" c="dimmed" mb={8}>
+                  Parameters
+                </Text>
+                <Group gap="xs">
+                  {selectedFlow.parameters.map(
+                    (param: FieldDescriptorProto, index: number) => (
+                      <Badge
+                        key={index}
+                        size="md"
+                        variant="light"
+                        radius="sm"
+                        color="blue"
+                      >
+                        {param.name}
+                      </Badge>
+                    )
+                  )}
+                </Group>
+              </div>
+            </Stack>
           )}
         </Paper>
 
@@ -245,7 +408,7 @@ export default function Flow() {
               right: "2rem",
               zIndex: 5,
             }}
-            onClick={startTrip}
+            onClick={handleOpenExecuteModal}
             title={
               nodes.length === 0 ? "Add nodes to execute flow" : "Execute flow"
             }
@@ -263,7 +426,7 @@ export default function Flow() {
           style={{
             position: "absolute",
             bottom: 0,
-            left: "1rem",
+            left: "7rem",
             right: "7rem",
             zIndex: 1000,
             backgroundColor: "var(--mantine-color-body)",
@@ -313,16 +476,17 @@ export default function Flow() {
           </Group>
           <div
             style={{
-              height: showState ? "15vh" : 0,
-              transition: "height 0.3s ease",
+              height: showState ? "auto" : 0,
+              maxHeight: "30vh",
+              transition: "max-height 0.3s ease",
               overflow: "hidden",
             }}
           >
-            <ScrollArea p="md" h="15vh">
+            <ScrollArea p="md">
               <Table>
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th>Key</Table.Th>
+                    <Table.Th style={{ width: "200px" }}>Key</Table.Th>
                     <Table.Th>Value</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -338,9 +502,9 @@ export default function Flow() {
                         <Text fw={500}>{key}</Text>
                       </Table.Td>
                       <Table.Td>
-                        <Text style={{ fontFamily: "monospace" }}>
+                        <Code block>
                           {JSON.stringify(Value.toJson(value as Value))}
-                        </Text>
+                        </Code>
                       </Table.Td>
                     </Table.Tr>
                   ))}
@@ -350,6 +514,145 @@ export default function Flow() {
           </div>
         </Paper>
       )}
+
+      <Modal
+        opened={executeModalOpen}
+        onClose={() => setExecuteModalOpen(false)}
+        title={<Title order={3}>Execute Flow</Title>}
+        size="lg"
+      >
+        <Stack gap="md">
+          <>
+            <Stack gap="xs">
+              <Text fw={500}>Select Entity</Text>
+              <Combobox
+                store={combobox}
+                onOptionSubmit={(val) => {
+                  setSelectedEntity({ name: val, type: EntityType.REPOSITORY });
+                  setSearchValue(val);
+                  combobox.closeDropdown();
+                }}
+              >
+                <Combobox.Target>
+                  <InputBase
+                    value={searchValue}
+                    onChange={(event) => {
+                      const value = event.currentTarget.value;
+                      setSearchValue(value);
+                      setSelectedEntity({
+                        name: value,
+                        type: EntityType.USER,
+                      });
+                    }}
+                    onClick={() => {
+                      const hasMatches = repositories.some((repo) =>
+                        repo.full_name
+                          .toLowerCase()
+                          .includes(searchValue.toLowerCase().trim())
+                      );
+                      if (hasMatches) {
+                        combobox.openDropdown();
+                      }
+                    }}
+                    leftSection={
+                      selectedEntity &&
+                      (selectedEntity.type === EntityType.REPOSITORY ? (
+                        <IconBrandGithub
+                          size={16}
+                          style={{ color: "var(--mantine-color-blue-filled)" }}
+                        />
+                      ) : (
+                        <IconUser
+                          size={16}
+                          style={{ color: "var(--mantine-color-gray-6)" }}
+                        />
+                      ))
+                    }
+                    rightSection={<IconSearch size={16} />}
+                    rightSectionPointerEvents="none"
+                    placeholder="Search repositories or enter custom entity..."
+                  />
+                </Combobox.Target>
+
+                {repositories.some((repo) =>
+                  repo.full_name
+                    .toLowerCase()
+                    .includes(searchValue.toLowerCase().trim())
+                ) && (
+                  <Combobox.Dropdown>
+                    <Combobox.Options>
+                      <ScrollArea.Autosize mah={400} type="scroll">
+                        {repositories
+                          .filter((repo) =>
+                            repo.full_name
+                              .toLowerCase()
+                              .includes(searchValue.toLowerCase().trim())
+                          )
+                          .map((repo) => (
+                            <Combobox.Option
+                              value={repo.full_name}
+                              key={repo.node_id}
+                            >
+                              <Group>
+                                <IconBrandGithub size={20} />
+                                <div>
+                                  <Text fw={500}>{repo.full_name}</Text>
+                                  <Text size="xs" c="dimmed">
+                                    {repo.description || "No description"}
+                                  </Text>
+                                </div>
+                              </Group>
+                            </Combobox.Option>
+                          ))}
+                      </ScrollArea.Autosize>
+                    </Combobox.Options>
+                  </Combobox.Dropdown>
+                )}
+              </Combobox>
+            </Stack>
+
+            {selectedFlow.parameters.length > 0 && (
+              <Stack gap="xs">
+                <Text fw={500}>Parameters</Text>
+                {selectedFlow.parameters.map((param, index) => (
+                  <TextInput
+                    key={index}
+                    label={param.name}
+                    placeholder={`Enter ${param.name}`}
+                    value={paramValues[param.name!] || ""}
+                    onChange={(e) =>
+                      setParamValues({
+                        ...paramValues,
+                        [param.name!]: e.currentTarget.value,
+                      })
+                    }
+                    required
+                  />
+                ))}
+              </Stack>
+            )}
+
+            <Group justify="flex-end" mt="xl">
+              <Button
+                variant="light"
+                onClick={() => setExecuteModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleExecute}
+                disabled={
+                  !selectedEntity ||
+                  Object.keys(paramValues).length <
+                    selectedFlow.parameters.length
+                }
+              >
+                Execute
+              </Button>
+            </Group>
+          </>
+        </Stack>
+      </Modal>
     </div>
   );
 }

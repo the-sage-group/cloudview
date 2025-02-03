@@ -10,6 +10,8 @@ import {
   Button,
   ActionIcon,
   Loader,
+  Badge,
+  Code,
 } from "@mantine/core";
 import { IconArrowLeft, IconX } from "@tabler/icons-react";
 import { Value } from "@the-sage-group/awyes-web";
@@ -116,9 +118,39 @@ export default function Events() {
 
       <Stack gap="md">
         {selectedEvents.map((event, index) => (
-          <Paper key={index} withBorder p="md" radius="md">
+          <Paper
+            key={index}
+            withBorder
+            p="md"
+            radius="md"
+            style={{
+              borderLeft: `4px solid ${
+                event.label === "SUCCESS"
+                  ? "var(--mantine-color-green-6)"
+                  : event.label === "FAILURE"
+                  ? "var(--mantine-color-red-6)"
+                  : "var(--mantine-color-blue-6)"
+              }`,
+            }}
+          >
             <Group justify="space-between" mb="md">
-              <Title order={4}>Event {index + 1}</Title>
+              <Group gap="xs">
+                <Title order={4}>
+                  {event.position?.name || "Unknown Position"}
+                </Title>
+                <Badge
+                  variant="light"
+                  color={
+                    event.label === "SUCCESS"
+                      ? "green"
+                      : event.label === "FAILURE"
+                      ? "red"
+                      : "blue"
+                  }
+                >
+                  {event.label || "N/A"}
+                </Badge>
+              </Group>
               <Text size="sm" c="dimmed">
                 {new Date(Number(event.timestamp)).toLocaleString()}
               </Text>
@@ -133,13 +165,13 @@ export default function Events() {
               <Table.Tbody>
                 {Object.entries(event.state).map(([key, value]) => (
                   <Table.Tr key={key}>
-                    <Table.Td>
+                    <Table.Td style={{ width: "200px" }}>
                       <Text fw={500}>{key}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text style={{ fontFamily: "monospace" }}>
-                        {JSON.stringify(Value.toJson(value as Value), null, 2)}
-                      </Text>
+                      <Code block>
+                        {JSON.stringify(Value.toJson(value as Value))}
+                      </Code>
                     </Table.Td>
                   </Table.Tr>
                 ))}

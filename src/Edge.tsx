@@ -19,7 +19,7 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
 
   return (
     <>
-      <BezierEdge {...props} style={{ opacity: 0.2 }} />
+      <BezierEdge {...props} style={{ opacity: 0.8, strokeWidth: 2 }} />
       <foreignObject
         width={120}
         height={30}

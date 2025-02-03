@@ -34,17 +34,39 @@ export function toTransitionProto(edge: FlowEdgeType): Transition {
 export function toFlowGraph(route: Route): FlowGraphType {
   // Create a new dagre graph
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: "TB", nodesep: 70, ranksep: 70 });
+  g.setGraph({
+    rankdir: "LR",
+    nodesep: 75,
+    ranksep: 75,
+    align: "UL",
+  });
 
   const flowNodes = route.positions.map((node) => toFlowNode(node));
   flowNodes.forEach((node) => {
-    g.setNode(node.id, { width: 100, height: 100 });
+    g.setNode(node.id, { width: 200, height: 300 });
   });
+
   const flowEdges = route.transitions.map((edge) =>
     toFlowEdge(edge, flowNodes)
   );
+
   flowEdges.forEach((edge) => {
-    g.setEdge(edge.source, edge.target, { weight: 1 });
+    switch (edge.data?.label) {
+      case "SUCCESS":
+        g.setEdge(edge.source, edge.target, {
+          weight: 2,
+          minlen: 1,
+          labelpos: "c",
+        });
+        break;
+      case "FAILURE":
+        g.setEdge(edge.source, edge.target, {
+          weight: 0.1,
+          minlen: 1,
+          labelpos: "c",
+        });
+        break;
+    }
   });
 
   // Calculate layout
