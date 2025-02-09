@@ -1,12 +1,15 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
+import { Label } from "@the-sage-group/awyes-web";
 import { BezierEdge, EdgeProps } from "@xyflow/react";
 import { Popover, Autocomplete, Badge, rem } from "@mantine/core";
-import { FlowEdgeType } from "./types";
-import { FlowContext } from "./Context";
+
+import { useAwyes } from "../Context";
+import { FlowEdgeType } from "../types";
 
 export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
   const [opened, setOpened] = useState(false);
-  const { selectedFlow, setSelectedFlow } = useContext(FlowContext);
+  const [inputValue, setInputValue] = useState("");
+  const { selectedFlow, setSelectedFlow } = useAwyes();
   const { data: edge, id } = props;
   if (!edge) return null;
   const sourceNode = selectedFlow?.nodes.find(
@@ -16,6 +19,22 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
     (n) => n.id === props.target
   )?.data;
   if (!sourceNode || !targetNode) return null;
+
+  const updateEdgeLabel = (value: string) => {
+    const updatedEdges = selectedFlow?.edges.map((e) => {
+      if (e.id === id) {
+        e.data!.label = value;
+        e.data!.from = sourceNode;
+        e.data!.to = targetNode;
+      }
+      return e;
+    });
+    setSelectedFlow({
+      ...selectedFlow,
+      edges: updatedEdges,
+    });
+    setOpened(false);
+  };
 
   return (
     <>
@@ -34,7 +53,12 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
           <Popover
             opened={opened}
-            onChange={setOpened}
+            onChange={(isOpen) => {
+              setOpened(isOpen);
+              if (isOpen) {
+                setInputValue(edge.label || "");
+              }
+            }}
             position="top"
             withArrow
             shadow="md"
@@ -66,28 +90,23 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
             </Popover.Target>
             <Popover.Dropdown p="xs">
               <Autocomplete
-                data={["SUCCESS", "FAILURE"]}
+                data={Object.keys(Label).filter((key) => isNaN(Number(key)))}
                 placeholder="Add edge label"
-                value={edge.label || ""}
+                value={inputValue}
                 variant="filled"
                 size="xs"
-                onChange={(value) => {
-                  const updatedEdges = selectedFlow?.edges.map((e) => {
-                    if (e.id === id) {
-                      e.data!.label = value;
-                      e.data!.from = sourceNode;
-                      e.data!.to = targetNode;
-                    }
-                    return e;
-                  });
-                  setSelectedFlow({
-                    ...selectedFlow,
-                    edges: updatedEdges,
-                  });
+                onChange={setInputValue}
+                onOptionSubmit={updateEdgeLabel}
+                onBlur={() => {
+                  if (inputValue) {
+                    updateEdgeLabel(inputValue);
+                  } else {
+                    setOpened(false);
+                  }
                 }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
-                    setOpened(false);
+                    updateEdgeLabel(inputValue);
                   }
                 }}
               />
