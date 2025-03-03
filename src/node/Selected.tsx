@@ -1,19 +1,39 @@
+import { useEffect, useState } from "react";
 import { Paper, Text, Stack, Badge, Group, Code } from "@mantine/core";
 import {
   FieldDescriptorProto_Label,
   FieldDescriptorProto_Type,
   Value,
   Label,
+  Handler,
 } from "@the-sage-group/awyes-web";
 import { useAwyes } from "../Context";
 
 export function SelectedNode() {
-  const { selectedNode, selectedTripEvents } = useAwyes();
+  const { awyes, selectedNode, selectedTripEvents } = useAwyes();
+  const [handler, setHandler] = useState<Handler | null>(null);
+
+  useEffect(() => {
+    async function fetchHandlerDetails() {
+      if (!selectedNode) return;
+      try {
+        const { response } = await awyes.getHandler({
+          handler: selectedNode.data.handler,
+        });
+        setHandler(response.handler || null);
+      } catch (error) {
+        console.error("Failed to fetch handler details:", error);
+      }
+    }
+
+    fetchHandlerDetails();
+  }, [selectedNode]);
+
   if (!selectedNode) return null;
 
-  // Filter events for the selected node
+  const { data: node } = selectedNode;
   const nodeEvents = selectedTripEvents.filter(
-    (event) => event.position?.name === selectedNode.data.name
+    (event) => event.position?.name === node.name
   );
 
   return (
@@ -36,7 +56,7 @@ export function SelectedNode() {
             Name
           </Text>
           <Text size="lg" fw={700}>
-            {selectedNode.data.name || selectedNode.data.handler?.name}
+            {node.name}
           </Text>
         </div>
 
@@ -46,18 +66,18 @@ export function SelectedNode() {
           </Text>
           <Group gap={8}>
             <Badge variant="dot" color="violet" size="sm">
-              {`${selectedNode.data.handler?.context}.${selectedNode.data.handler?.name}`}
+              {node.handler}
             </Badge>
           </Group>
         </div>
 
-        {selectedNode.data.handler?.parameters?.length! > 0 && (
+        {handler?.parameters?.length! > 0 && (
           <div>
             <Text size="sm" fw={600} c="dimmed" mb={4}>
               Parameters
             </Text>
             <Stack gap={6}>
-              {selectedNode.data.handler?.parameters.map((param, index) => (
+              {handler?.parameters.map((param, index) => (
                 <Group key={index} gap={8}>
                   <Text size="sm" fw={500}>
                     {param.name}
@@ -73,13 +93,13 @@ export function SelectedNode() {
           </div>
         )}
 
-        {selectedNode.data.handler?.returns?.length! > 0 && (
+        {handler?.returns?.length! > 0 && (
           <div>
             <Text size="sm" fw={600} c="dimmed" mb={4}>
               Returns
             </Text>
             <Stack gap={6}>
-              {selectedNode.data.handler?.returns.map((ret, index) => (
+              {handler?.returns.map((ret, index) => (
                 <Group key={index} gap={8}>
                   <Text size="sm" fw={500}>
                     {ret.name}
@@ -109,9 +129,9 @@ export function SelectedNode() {
                   radius="md"
                   style={{
                     borderLeft: `4px solid ${
-                      event.label === Label[Label.SUCCESS]
+                      event.exitLabel === Label[Label.SUCCESS]
                         ? "var(--mantine-color-green-6)"
-                        : event.label === Label[Label.FAILURE]
+                        : event.exitLabel === Label[Label.FAILURE]
                         ? "var(--mantine-color-red-6)"
                         : "var(--mantine-color-blue-6)"
                     }`,
@@ -122,14 +142,14 @@ export function SelectedNode() {
                       <Badge
                         variant="light"
                         color={
-                          event.label === Label[Label.SUCCESS]
+                          event.exitLabel === Label[Label.SUCCESS]
                             ? "green"
-                            : event.label === Label[Label.FAILURE]
+                            : event.exitLabel === Label[Label.FAILURE]
                             ? "red"
                             : "blue"
                         }
                       >
-                        {event.label || "N/A"}
+                        {event.exitLabel || "N/A"}
                       </Badge>
                     </Group>
                     <Text size="xs" c="dimmed">
@@ -144,9 +164,9 @@ export function SelectedNode() {
                         : ""}
                     </Text>
                   </Group>
-                  {event.message && (
+                  {event.exitMessage && (
                     <Text size="sm" mb="xs" c="dark.3">
-                      {event.message}
+                      {event.exitMessage}
                     </Text>
                   )}
                   {Object.keys(event.state).length > 0 && (

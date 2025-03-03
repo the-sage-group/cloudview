@@ -16,7 +16,7 @@ export default function Events() {
     if (!tripId || selectedTripEvents.length > 0) return;
 
     // Subscribe to trip updates
-    const subscription = awyes.watchTrip({ tripId });
+    const subscription = awyes.watchTrip({ trip: tripId });
 
     subscription.responses.onNext((event) => {
       if (!event) return;

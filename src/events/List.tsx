@@ -24,9 +24,9 @@ export default function List() {
           radius="md"
           style={{
             borderLeft: `4px solid ${
-              event.label === "SUCCESS"
+              event.exitLabel === "SUCCESS"
                 ? "var(--mantine-color-green-6)"
-                : event.label === "FAILURE"
+                : event.exitLabel === "FAILURE"
                 ? "var(--mantine-color-red-6)"
                 : "var(--mantine-color-blue-6)"
             }`,
@@ -40,14 +40,14 @@ export default function List() {
               <Badge
                 variant="light"
                 color={
-                  event.label === "SUCCESS"
+                  event.exitLabel === "SUCCESS"
                     ? "green"
-                    : event.label === "FAILURE"
+                    : event.exitLabel === "FAILURE"
                     ? "red"
                     : "blue"
                 }
               >
-                {event.label || "N/A"}
+                {event.exitLabel || "N/A"}
               </Badge>
             </Group>
             <Text size="sm" c="dimmed">
@@ -55,9 +55,7 @@ export default function List() {
             </Text>
           </Group>
 
-          {event.message && (
-            <Text mb="md">{event.message}</Text>
-          )}
+          {event.exitMessage && <Text mb="md">{event.exitMessage}</Text>}
 
           {Object.keys(event.state).length > 0 && (
             <Table>

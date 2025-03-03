@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import { Stack, Group, Text, Title, Button, Badge, Paper } from "@mantine/core";
 import { FieldDescriptorProto } from "@the-sage-group/awyes-web";
-import { IconBrandGithub, IconHistory } from "@tabler/icons-react";
+import { IconHistory } from "@tabler/icons-react";
 
 import { useAwyes } from "../Context";
 import { Entity } from "../molecules/Entity";

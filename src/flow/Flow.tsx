@@ -13,13 +13,11 @@ import { Title, Text } from "@mantine/core";
 
 import { Info } from "./Info";
 import { Execute } from "./Execute";
-import { NewFlow } from "./New";
 import { FlowNode } from "../node/Node";
 import { FlowEdge } from "../edge/Edge";
 import { useAwyes } from "../Context";
 import { SelectedNode } from "../node/Selected";
-import { FlowNodeType, FlowEdgeType, toRouteProto } from "../types";
-import { handleNodesChange, handleEdgesChange, createNewEdge } from "./utils";
+import { FlowNodeType, FlowEdgeType } from "../types";
 
 const nodeTypes = {
   flowNode: FlowNode,
@@ -31,44 +29,23 @@ const edgeTypes = {
 
 export default function Flow() {
   const { routeName } = useParams();
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeType>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdgeType>([]);
-  const {
-    selectedFlow,
-    setSelectedFlow,
-    setSelectedNode,
-    flows,
-    setFlows,
-    awyes,
-  } = useAwyes();
+  const [nodes, setNodes] = useNodesState<FlowNodeType>([]);
+  const [edges, setEdges] = useEdgesState<FlowEdgeType>([]);
+  const { selectedFlow, setSelectedFlow, setSelectedNode, flows } = useAwyes();
 
   // Effect for handling route changes
   useEffect(() => {
-    if (routeName) {
-      const matchingFlow = flows.find((flow) => flow.name === routeName);
-      if (matchingFlow) {
-        setSelectedFlow(matchingFlow);
-      }
-    }
+    if (!routeName) return;
+    const matchingFlow = flows.find((flow) => flow.name === routeName);
+    if (!matchingFlow) return;
+    setSelectedFlow(matchingFlow);
   }, [routeName, flows]);
 
   // Effect for updating nodes and edges when selectedFlow changes
   useEffect(() => {
-    async function updateFlow() {
-      if (selectedFlow) {
-        setNodes(selectedFlow.nodes);
-        setEdges(selectedFlow.edges);
-        try {
-          await awyes.registerRoute({ route: toRouteProto(selectedFlow) });
-        } catch (error) {
-          console.error("Failed to save route:", error);
-        }
-      } else {
-        setNodes([]);
-        setEdges([]);
-      }
-    }
-    updateFlow();
+    if (!selectedFlow) return;
+    setNodes(selectedFlow.nodes);
+    setEdges(selectedFlow.edges);
   }, [selectedFlow]);
 
   if (!selectedFlow) {
@@ -86,7 +63,6 @@ export default function Flow() {
       >
         <Title order={2}>No Flow Selected</Title>
         <Text>Select an existing flow or create a new one to get started</Text>
-        <NewFlow />
       </div>
     );
   }
@@ -100,28 +76,12 @@ export default function Flow() {
         minZoom={0.1}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        edgesFocusable={false}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        edgesReconnectable={false}
+        elementsSelectable={true}
         onPaneClick={() => setSelectedNode(null)}
-        onConnect={(connection) => {
-          if (connection.source && connection.target) {
-            createNewEdge(connection, selectedFlow, setSelectedFlow);
-          }
-        }}
-        onNodesChange={(changes) =>
-          handleNodesChange(
-            changes,
-            onNodesChange,
-            selectedFlow,
-            setSelectedFlow
-          )
-        }
-        onEdgesChange={(changes) =>
-          handleEdgesChange(
-            changes,
-            onEdgesChange,
-            selectedFlow,
-            setSelectedFlow
-          )
-        }
       >
         <Controls
           showZoom={false}

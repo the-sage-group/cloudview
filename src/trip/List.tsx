@@ -40,7 +40,7 @@ export function List({ trips }: ListProps) {
                   component="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    trip.route?.name && navigate(`/route/${trip.route.name}`);
+                    trip.route && navigate(`/route/${trip.route}`);
                   }}
                   variant="light"
                   color="blue"
@@ -52,7 +52,7 @@ export function List({ trips }: ListProps) {
                     transition: "all 0.2s",
                   }}
                 >
-                  {trip.route.name}
+                  {trip.route}
                 </Badge>
               )}
             </Table.Td>

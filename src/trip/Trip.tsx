@@ -55,15 +55,19 @@ export default function Trip() {
       }
 
       try {
-        const { response: tripResponse } = await awyes.getTrip({ tripId });
-
+        const { response: tripResponse } = await awyes.getTrip({
+          trip: tripId,
+        });
+        const { response: routeResponse } = await awyes.getRoute({
+          route: tripResponse.trip?.route!,
+        });
         if (!tripResponse.trip) {
           setError("Trip not found");
           return;
         }
 
         setSelectedTrip(tripResponse.trip);
-        setSelectedFlow(toFlowGraph(tripResponse.trip.route!));
+        setSelectedFlow(toFlowGraph(routeResponse.route!));
         setError(null);
       } catch (error) {
         console.error("Failed to fetch trip: ", error);
@@ -73,7 +77,7 @@ export default function Trip() {
         return;
       }
 
-      const subscription = awyes.watchTrip({ tripId });
+      const subscription = awyes.watchTrip({ trip: tripId });
 
       subscription.responses.onNext((event) => {
         if (!event) return;

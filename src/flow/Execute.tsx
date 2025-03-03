@@ -22,10 +22,11 @@ import {
   EntityType,
   Entity,
   FieldDescriptorProto,
+  Value,
 } from "@the-sage-group/awyes-web";
 import { useNavigate } from "react-router";
 import { useState } from "react";
-import { handleExecuteFlow } from "./utils";
+
 import { useAwyes, useGitHub } from "../Context";
 
 export function Execute() {
@@ -192,15 +193,26 @@ export function Execute() {
               Cancel
             </Button>
             <Button
-              onClick={() => {
+              onClick={async () => {
                 if (!selectedEntity) return;
-                handleExecuteFlow(
-                  selectedEntity,
-                  paramValues,
-                  selectedFlow,
-                  awyes,
-                  navigate
-                );
+                try {
+                  const stateValues: { [key: string]: Value } = {};
+                  Object.entries(paramValues).forEach(([key, value]) => {
+                    stateValues[key] = Value.fromJson({ stringValue: value });
+                  });
+
+                  const { response } = await awyes.startTrip({
+                    route: {
+                      ...selectedFlow,
+                      positions: selectedFlow.nodes.map((node) => node.data),
+                    },
+                    state: stateValues,
+                    entity: selectedEntity,
+                  });
+                  navigate(`/trip/${response.trip?.id}`);
+                } catch (error) {
+                  console.error("Failed to execute flow:", error);
+                }
               }}
               disabled={
                 !selectedEntity ||

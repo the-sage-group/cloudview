@@ -56,4 +56,4 @@ export function Entity({ type, name }: EntityProps) {
       </Badge>
     </div>
   );
-} 
+}

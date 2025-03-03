@@ -59,4 +59,4 @@ export function Info({ selectedFlow }: InfoProps) {
       )}
     </Paper>
   );
-} 
+}

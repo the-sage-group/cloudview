@@ -11,62 +11,80 @@ export type FlowGraphType = Omit<Route, "positions" | "transitions"> & {
   edges: FlowEdgeType[];
 };
 
-export function toRouteProto(flow: FlowGraphType): Route {
+function toFlowNode(position: Position): FlowNodeType {
+  const id = uuid();
   return {
-    ...flow,
-    positions: flow.nodes.map(toPositionProto),
-    transitions: flow.edges.map(toTransitionProto),
+    id,
+    type: "flowNode",
+    data: { ...position, id },
+    position: { x: 0, y: 0 },
   };
 }
 
-export function toPositionProto(node: FlowNodeType): Position {
+function toFlowEdge(
+  position: Position,
+  transition: Transition,
+  nodes: FlowNodeType[]
+): FlowEdgeType {
+  const id = uuid();
   return {
-    ...node.data,
-  };
-}
-
-export function toTransitionProto(edge: FlowEdgeType): Transition {
-  return {
-    ...edge.data!,
+    id,
+    type: "flowEdge",
+    data: { ...transition, id },
+    source: nodes.find((node) => node.data.name === position.name)!.id,
+    target: nodes.find((node) => node.data.name === transition.position)!.id,
   };
 }
 
 export function toFlowGraph(route: Route): FlowGraphType {
   // Create a new dagre graph
-  const g = new dagre.graphlib.Graph();
-  g.setGraph({
-    rankdir: "LR",
-    nodesep: 75,
-    ranksep: 75,
-    align: "UL",
-  });
-
-  const flowNodes = route.positions.map((node) => toFlowNode(node));
-  flowNodes.forEach((node) => {
-    g.setNode(node.id, { width: 200, height: 300 });
-  });
-
-  const flowEdges = route.transitions.map((edge) =>
-    toFlowEdge(edge, flowNodes)
+  const g = new dagre.graphlib.Graph({ compound: true })
+    .setGraph({})
+    .setDefaultEdgeLabel(() => ({}));
+  const flowNodes = route.positions.map(toFlowNode);
+  const flowEdges = route.positions.flatMap((position) =>
+    position.transitions.map((transition) =>
+      toFlowEdge(position, transition, flowNodes)
+    )
   );
 
-  flowEdges.forEach((edge) => {
-    switch (edge.data?.label) {
-      case "SUCCESS":
-        g.setEdge(edge.source, edge.target, {
-          weight: 2,
-          minlen: 1,
-          labelpos: "c",
-        });
-        break;
-      case "FAILURE":
-        g.setEdge(edge.source, edge.target, {
-          weight: 0.1,
-          minlen: 1,
-          labelpos: "c",
-        });
-        break;
+  g.setNode("Start", {
+    width: 200,
+    height: 50,
+    label: "Start Group",
+  });
+
+  g.setNode("Middle", {
+    width: 200,
+    height: 50,
+    label: "Middle Group",
+  });
+
+  g.setNode("End", {
+    width: 200,
+    height: 50,
+    label: "End Group",
+  });
+
+  flowNodes.forEach((node) => {
+    g.setNode(node.id, {
+      width: 200,
+      height: 50,
+      label: node.data.name,
+    });
+    if (node.data.name === "Start") {
+      g.setParent(node.id, "Start");
+    } else if (node.data.name === "End") {
+      g.setParent(node.id, "End");
+    } else {
+      g.setParent(node.id, "Middle");
     }
+  });
+
+  flowEdges.forEach((edge) => {
+    g.setEdge(edge.source, edge.target, {
+      label: edge.data?.label,
+    });
   });
 
   // Calculate layout
@@ -83,35 +101,5 @@ export function toFlowGraph(route: Route): FlowGraphType {
       };
     }),
     edges: flowEdges,
-  };
-}
-
-export function toFlowEdge(
-  transition: Transition,
-  nodes: FlowNodeType[]
-): FlowEdgeType {
-  const id = uuid();
-  const fromNode = nodes.find((n) => n.data.name === transition.from?.name);
-  const toNode = nodes.find((n) => n.data.name === transition.to?.name);
-
-  return {
-    id,
-    type: "flowEdge",
-    data: { ...transition, id },
-    source: fromNode?.id || "",
-    target: toNode?.id || "",
-  };
-}
-
-export function toFlowNode(
-  position: Position,
-  location?: { x: number; y: number }
-): FlowNodeType {
-  const id = uuid();
-  return {
-    id,
-    type: "flowNode",
-    data: { ...position, id },
-    position: location || { x: 100, y: 100 },
   };
 }

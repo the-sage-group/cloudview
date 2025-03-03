@@ -5,11 +5,10 @@ import { Route, Handler, EntityType, Entity } from "@the-sage-group/awyes-web";
 import { IconSearch, IconRoute, IconBolt, IconUser } from "@tabler/icons-react";
 
 import { useAwyes } from "../Context";
-import { toFlowNode } from "../types";
 
 export function Search() {
+  const { awyes } = useAwyes();
   const navigate = useNavigate();
-  const { setSelectedNode, setSelectedFlow, selectedFlow, awyes } = useAwyes();
   const combobox = useCombobox({});
   const [value, setValue] = useState("");
   const [options, setOptions] = useState<{ group: string; items: any[] }[]>([]);
@@ -21,7 +20,7 @@ export function Search() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [value, selectedFlow]);
+  }, [value]);
 
   const mapEntity = (entity: Entity) => ({
     value: `${entity.name}-${EntityType[entity.type ?? 0]}`,
@@ -49,17 +48,7 @@ export function Search() {
     label: `${handler.context}.${handler.name}`,
     description: handler.description || "",
     icon: <IconBolt size={18} />,
-    onClick: () => {
-      if (selectedFlow) {
-        const newNode = toFlowNode({ handler });
-        setSelectedNode(newNode);
-        setSelectedFlow({
-          ...selectedFlow,
-          nodes: [...selectedFlow.nodes, newNode],
-        });
-        combobox.closeDropdown();
-      }
-    },
+    onClick: () => {},
   });
 
   async function handleSearch(query: string) {
@@ -152,7 +141,7 @@ export function Search() {
             onBlur={() => {
               combobox.closeDropdown();
             }}
-            placeholder="The do-everything bar-ista"
+            placeholder="What are you looking for?"
             style={{
               border: "none",
               background: "none",

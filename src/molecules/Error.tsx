@@ -1,4 +1,4 @@
-import { Title, Text, Button } from "@mantine/core";
+import { Title, Text } from "@mantine/core";
 import { ReactNode } from "react";
 
 interface ErrorProps {
@@ -25,4 +25,4 @@ export function Error({ title, message, action }: ErrorProps) {
       {action}
     </div>
   );
-} 
+}

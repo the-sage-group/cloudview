@@ -15,7 +15,6 @@ import Trip from "../trip/Trip";
 import Flow from "../flow/Flow";
 import Events from "../events/Events";
 import { Search } from "./Search";
-import { NewFlow } from "../flow/New";
 import { Trips } from "../trip/Trips";
 import { toFlowGraph } from "../types";
 import { useGitHub, useAwyes } from "../Context";
@@ -28,7 +27,6 @@ export default function App() {
   const {
     awyes,
     setFlows,
-    selectedFlow,
     setSelectedFlow,
     setSelectedTrip,
     setSelectedTripEvents,
@@ -81,8 +79,6 @@ export default function App() {
     fetchData();
   }, []);
 
-  console.log(selectedFlow?.name);
-
   return (
     <div style={{ position: "relative", minHeight: "100vh" }}>
       <LoadingOverlay
@@ -123,43 +119,49 @@ export default function App() {
             height: "60px",
           }}
         >
-          <Group gap="xl" style={{ flex: "0 0 auto", marginRight: "2rem" }}>
-            <Burger opened={sidebarOpened} onClick={sidebar.toggle} size="sm" />
-            <Link
-              to="/"
-              style={{ textDecoration: "none" }}
-              onClick={() => {
-                setSelectedFlow(null);
-                setSelectedTrip(null);
-                setSelectedTripEvents([]);
-                setSelectedNode(null);
-              }}
-            >
-              <Title
-                order={3}
-                style={{
-                  margin: 0,
-                  whiteSpace: "nowrap",
-                  background:
-                    "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  cursor: "pointer",
+          <Box style={{ flex: "1", display: "flex" }}>
+            <Group gap="xl" style={{ flex: "0 0 auto", marginRight: "2rem" }}>
+              <Burger
+                opened={sidebarOpened}
+                onClick={sidebar.toggle}
+                size="sm"
+              />
+              <Link
+                to="/"
+                style={{ textDecoration: "none" }}
+                onClick={() => {
+                  setSelectedFlow(null);
+                  setSelectedTrip(null);
+                  setSelectedTripEvents([]);
+                  setSelectedNode(null);
                 }}
               >
-                ☁️ Awyes
-              </Title>
-            </Link>
-          </Group>
+                <Title
+                  order={3}
+                  style={{
+                    margin: 0,
+                    whiteSpace: "nowrap",
+                    background:
+                      "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: "pointer",
+                  }}
+                >
+                  ☁️ Awyes
+                </Title>
+              </Link>
+            </Group>
+          </Box>
+
           <Box
             style={{
-              flex: "1 1 auto",
-              maxWidth: "800px",
-              margin: "0 auto",
+              flex: "0 0 auto",
+              width: "500px",
               display: "flex",
               justifyContent: "center",
             }}
@@ -167,9 +169,7 @@ export default function App() {
             <Search />
           </Box>
 
-          <Group gap="sm" style={{ flex: "0 0 auto", marginLeft: "2rem" }}>
-            <NewFlow />
-          </Group>
+          <Box style={{ flex: "1" }} />
         </AppShell.Header>
 
         <AppShell.Navbar p="md">
