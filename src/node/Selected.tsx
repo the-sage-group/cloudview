@@ -17,6 +17,7 @@ export function SelectedNode() {
     async function fetchHandlerDetails() {
       if (!selectedNode) return;
       try {
+        console.log(selectedNode.data.handler);
         const { response } = await awyes.getHandler({
           handler: selectedNode.data.handler,
         });

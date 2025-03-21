@@ -24,7 +24,7 @@ export function Info({ selectedFlow }: InfoProps) {
     >
       <Group
         justify="space-between"
-        mb={selectedFlow.parameters.length > 0 ? "lg" : 0}
+        mb={selectedFlow.parameter.length > 0 ? "lg" : 0}
       >
         <Group gap="xs">
           <Title order={4} style={{ margin: 0 }}>
@@ -33,14 +33,14 @@ export function Info({ selectedFlow }: InfoProps) {
         </Group>
       </Group>
 
-      {selectedFlow.parameters.length > 0 && (
+      {selectedFlow.parameter.length > 0 && (
         <Stack gap="lg">
           <div>
             <Text size="sm" fw={600} tt="uppercase" c="dimmed" mb={8}>
               Parameters
             </Text>
             <Group gap="xs">
-              {selectedFlow.parameters.map(
+              {selectedFlow.parameter.map(
                 (param: FieldDescriptorProto, index: number) => (
                   <Badge
                     key={index}

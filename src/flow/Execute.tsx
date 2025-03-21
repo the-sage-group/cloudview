@@ -165,10 +165,10 @@ export function Execute() {
             </Combobox>
           </Stack>
 
-          {selectedFlow.parameters.length > 0 && (
+          {selectedFlow.parameter.length > 0 && (
             <Stack gap="xs">
               <Text fw={500}>Parameters</Text>
-              {selectedFlow.parameters.map(
+              {selectedFlow.parameter.map(
                 (param: FieldDescriptorProto, index) => (
                   <TextInput
                     key={index}
@@ -204,7 +204,7 @@ export function Execute() {
                   const { response } = await awyes.startTrip({
                     route: {
                       ...selectedFlow,
-                      positions: selectedFlow.nodes.map((node) => node.data),
+                      position: selectedFlow.nodes.map((node) => node.data),
                     },
                     state: stateValues,
                     entity: selectedEntity,
@@ -216,7 +216,7 @@ export function Execute() {
               }}
               disabled={
                 !selectedEntity ||
-                Object.keys(paramValues).length < selectedFlow.parameters.length
+                Object.keys(paramValues).length < selectedFlow.parameter.length
               }
             >
               Execute
