@@ -8,6 +8,8 @@ import {
   Handler,
 } from "@the-sage-group/awyes-web";
 import { useAwyes } from "../Context";
+import { Field } from "../molecules/Field";
+import { BADGE_COLORS } from "../constants/theme";
 
 export function SelectedNode() {
   const { awyes, selectedNode, selectedTripEvents } = useAwyes();
@@ -66,8 +68,8 @@ export function SelectedNode() {
             Handler
           </Text>
           <Group gap={8}>
-            <Badge variant="dot" color="violet" size="sm">
-              {node.handler}
+            <Badge variant="dot" color={BADGE_COLORS.HANDLER} size="sm">
+              <span style={{ fontWeight: 600 }}>{node.handler}</span>
             </Badge>
           </Group>
         </div>
@@ -79,16 +81,7 @@ export function SelectedNode() {
             </Text>
             <Stack gap={6}>
               {handler?.parameters.map((param, index) => (
-                <Group key={index} gap={8}>
-                  <Text size="sm" fw={500}>
-                    {param.name}
-                  </Text>
-                  <Badge variant="dot" color="blue" size="sm">
-                    {`${
-                      param.label ? FieldDescriptorProto_Label[param.label] : ""
-                    } ${FieldDescriptorProto_Type[param.type!]}`}
-                  </Badge>
-                </Group>
+                <Field key={index} field={param} />
               ))}
             </Stack>
           </div>
@@ -101,16 +94,7 @@ export function SelectedNode() {
             </Text>
             <Stack gap={6}>
               {handler?.returns.map((ret, index) => (
-                <Group key={index} gap={8}>
-                  <Text size="sm" fw={500}>
-                    {ret.name}
-                  </Text>
-                  <Badge variant="dot" color="green" size="sm">
-                    {`${
-                      ret.label ? FieldDescriptorProto_Label[ret.label] : ""
-                    } ${FieldDescriptorProto_Type[ret.type!]}`}
-                  </Badge>
-                </Group>
+                <Field key={index} field={ret} />
               ))}
             </Stack>
           </div>
@@ -131,10 +115,10 @@ export function SelectedNode() {
                   style={{
                     borderLeft: `4px solid ${
                       event.exitLabel === Label[Label.SUCCESS]
-                        ? "var(--mantine-color-green-6)"
+                        ? `var(--mantine-color-${BADGE_COLORS.SUCCESS}-6)`
                         : event.exitLabel === Label[Label.FAILURE]
-                        ? "var(--mantine-color-red-6)"
-                        : "var(--mantine-color-blue-6)"
+                        ? `var(--mantine-color-${BADGE_COLORS.FAILURE}-6)`
+                        : `var(--mantine-color-${BADGE_COLORS.DEFAULT}-6)`
                     }`,
                   }}
                 >
@@ -144,10 +128,10 @@ export function SelectedNode() {
                         variant="light"
                         color={
                           event.exitLabel === Label[Label.SUCCESS]
-                            ? "green"
+                            ? BADGE_COLORS.SUCCESS
                             : event.exitLabel === Label[Label.FAILURE]
-                            ? "red"
-                            : "blue"
+                            ? BADGE_COLORS.FAILURE
+                            : BADGE_COLORS.DEFAULT
                         }
                       >
                         {event.exitLabel || "N/A"}

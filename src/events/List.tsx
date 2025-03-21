@@ -11,6 +11,7 @@ import {
 import { Value } from "@the-sage-group/awyes-web";
 
 import { useAwyes } from "../Context";
+import { BADGE_COLORS } from "../constants/theme";
 
 export default function List() {
   const { selectedTripEvents } = useAwyes();
@@ -25,10 +26,10 @@ export default function List() {
           style={{
             borderLeft: `4px solid ${
               event.exitLabel === "SUCCESS"
-                ? "var(--mantine-color-green-6)"
+                ? `var(--mantine-color-${BADGE_COLORS.SUCCESS}-6)`
                 : event.exitLabel === "FAILURE"
-                ? "var(--mantine-color-red-6)"
-                : "var(--mantine-color-blue-6)"
+                ? `var(--mantine-color-${BADGE_COLORS.FAILURE}-6)`
+                : `var(--mantine-color-${BADGE_COLORS.DEFAULT}-6)`
             }`,
           }}
         >
@@ -41,10 +42,10 @@ export default function List() {
                 variant="light"
                 color={
                   event.exitLabel === "SUCCESS"
-                    ? "green"
+                    ? BADGE_COLORS.SUCCESS
                     : event.exitLabel === "FAILURE"
-                    ? "red"
-                    : "blue"
+                    ? BADGE_COLORS.FAILURE
+                    : BADGE_COLORS.DEFAULT
                 }
               >
                 {event.exitLabel || "N/A"}

@@ -3,6 +3,7 @@ import { Table, Badge } from "@mantine/core";
 import { Trip } from "@the-sage-group/awyes-web";
 
 import { Entity } from "../molecules/Entity";
+import { BADGE_COLORS } from "../constants/theme";
 
 interface ListProps {
   trips: Trip[];
@@ -60,7 +61,7 @@ export function List({ trips }: ListProps) {
               {trip.id && (
                 <Badge
                   variant="dot"
-                  color={trip.completedAt ? "green" : "blue"}
+                  color={trip.completedAt ? BADGE_COLORS.TRIP_ID.COMPLETED : BADGE_COLORS.TRIP_ID.IN_PROGRESS}
                   size="md"
                   title={trip.id}
                   style={{

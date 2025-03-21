@@ -1,4 +1,3 @@
-import { useParams } from "react-router";
 import { Paper, Text, Stack } from "@mantine/core";
 import { NodeProps, Handle, Position } from "@xyflow/react";
 
@@ -7,7 +6,6 @@ import { FlowNodeType } from "../types";
 
 export function FlowNode(props: NodeProps<FlowNodeType>) {
   const { data: node, id } = props;
-  const { tripId } = useParams();
   const { selectedFlow, selectedNode, setSelectedNode, selectedTripEvents } =
     useAwyes();
 
@@ -41,8 +39,10 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
           background: hasEvents
             ? "var(--mantine-color-blue-1)"
             : "var(--mantine-color-white)",
-          borderColor: isSelected ? "var(--mantine-color-blue-6)" : undefined,
-          borderWidth: isSelected ? "3px" : "1px",
+          borderWidth: "2px",
+          borderColor: isSelected
+            ? "var(--mantine-color-blue-6)"
+            : "var(--mantine-color-gray-3)",
         }}
       >
         <Stack gap="xs" align="center" style={{ width: "100%" }}>
@@ -51,7 +51,7 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
             fw={700}
             ta="center"
             style={{
-              cursor: tripId ? "default" : "text",
+              cursor: "pointer",
               wordBreak: "break-word",
             }}
           >

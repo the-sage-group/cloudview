@@ -1,12 +1,13 @@
-import { Paper, Title, Group, Badge, Text, Stack } from "@mantine/core";
+import { Paper, Title, Group, Text, Stack } from "@mantine/core";
 import { FieldDescriptorProto } from "@the-sage-group/awyes-web";
 import { FlowGraphType } from "../types";
+import { Field } from "../molecules/Field";
 
-interface InfoProps {
+interface SelectedFlowProps {
   selectedFlow: FlowGraphType;
 }
 
-export function Info({ selectedFlow }: InfoProps) {
+export function SelectedFlow({ selectedFlow }: SelectedFlowProps) {
   return (
     <Paper
       shadow="sm"
@@ -28,7 +29,7 @@ export function Info({ selectedFlow }: InfoProps) {
       >
         <Group gap="xs">
           <Title order={4} style={{ margin: 0 }}>
-            {selectedFlow.name}
+            {selectedFlow.context}.{selectedFlow.name}
           </Title>
         </Group>
       </Group>
@@ -36,21 +37,13 @@ export function Info({ selectedFlow }: InfoProps) {
       {selectedFlow.parameter.length > 0 && (
         <Stack gap="lg">
           <div>
-            <Text size="sm" fw={600} tt="uppercase" c="dimmed" mb={8}>
+            <Text size="sm" fw={600} c="dimmed" mb={8}>
               Parameters
             </Text>
             <Group gap="xs">
               {selectedFlow.parameter.map(
                 (param: FieldDescriptorProto, index: number) => (
-                  <Badge
-                    key={index}
-                    size="md"
-                    variant="light"
-                    radius="sm"
-                    color="blue"
-                  >
-                    {param.name}
-                  </Badge>
+                  <Field key={index} field={param} />
                 )
               )}
             </Group>

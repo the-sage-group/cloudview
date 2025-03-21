@@ -5,6 +5,7 @@ import { IconHistory } from "@tabler/icons-react";
 
 import { useAwyes } from "../Context";
 import { Entity } from "../molecules/Entity";
+import { Field } from "../molecules/Field";
 
 export function Status() {
   const { selectedTrip, selectedFlow } = useAwyes();
@@ -108,24 +109,16 @@ export function Status() {
         </Stack>
       </Stack>
 
-      {selectedFlow?.parameters?.length! > 0 && (
+      {selectedFlow?.parameter?.length! > 0 && (
         <Stack gap="lg" mt="lg">
           <div>
             <Text size="sm" fw={600} tt="uppercase" c="dimmed" mb={8}>
               Parameters
             </Text>
             <Group gap="xs">
-              {selectedFlow?.parameters.map(
+              {selectedFlow?.parameter.map(
                 (param: FieldDescriptorProto, index: number) => (
-                  <Badge
-                    key={index}
-                    size="md"
-                    variant="light"
-                    radius="sm"
-                    color="blue"
-                  >
-                    {param.name}
-                  </Badge>
+                  <Field key={index} field={param} />
                 )
               )}
             </Group>

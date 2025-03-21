@@ -11,8 +11,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Title, Text } from "@mantine/core";
 
-import { Info } from "./Info";
 import { Execute } from "./Execute";
+import { SelectedFlow } from "./Selected";
 import { FlowNode } from "../node/Node";
 import { FlowEdge } from "../edge/Edge";
 import { useAwyes } from "../Context";
@@ -89,7 +89,7 @@ export default function Flow() {
           showFitView={true}
           position="bottom-left"
         />
-        <Info selectedFlow={selectedFlow} />
+        <SelectedFlow selectedFlow={selectedFlow} />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         <SelectedNode />
         <Execute />
