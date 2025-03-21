@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Paper, Text, Stack, Badge, Group, Code } from "@mantine/core";
+import { Paper, Text, Stack, Badge, Group, Code, Table } from "@mantine/core";
 import {
   FieldDescriptorProto_Label,
   FieldDescriptorProto_Type,
@@ -123,20 +123,6 @@ export function SelectedNode() {
                   }}
                 >
                   <Group justify="space-between" mb="md">
-                    <Group gap="xs">
-                      <Badge
-                        variant="light"
-                        color={
-                          event.exitLabel === Label[Label.SUCCESS]
-                            ? BADGE_COLORS.SUCCESS
-                            : event.exitLabel === Label[Label.FAILURE]
-                            ? BADGE_COLORS.FAILURE
-                            : BADGE_COLORS.DEFAULT
-                        }
-                      >
-                        {event.exitLabel || "N/A"}
-                      </Badge>
-                    </Group>
                     <Text size="xs" c="dimmed">
                       {event.timestamp
                         ? new Date(Number(event.timestamp)).toLocaleString(
@@ -155,20 +141,16 @@ export function SelectedNode() {
                     </Text>
                   )}
                   {Object.keys(event.state).length > 0 && (
-                    <Code
-                      block
-                      style={{ maxHeight: "200px", overflow: "auto" }}
-                    >
-                      {JSON.stringify(
-                        Object.fromEntries(
-                          Object.entries(event.state).map(([key, value]) => [
-                            key,
-                            Value.toJson(value as Value),
-                          ])
-                        ),
-                        null,
-                        2
-                      )}
+                    <Code block>
+                      {Object.entries(event.state).map(([key, value]) => {
+                        const decodedValue = new TextDecoder().decode(value);
+                        return (
+                          <div key={key}>
+                            <strong>{key}:</strong>{" "}
+                            {JSON.stringify(JSON.parse(decodedValue), null, 2)}
+                          </div>
+                        );
+                      })}
                     </Code>
                   )}
                 </Paper>

@@ -1,5 +1,14 @@
 import { useNavigate } from "react-router";
-import { Stack, Group, Text, Title, Button, Badge, Paper } from "@mantine/core";
+import {
+  Stack,
+  Group,
+  Text,
+  Title,
+  Button,
+  Badge,
+  Paper,
+  Tooltip,
+} from "@mantine/core";
 import { FieldDescriptorProto } from "@the-sage-group/awyes-web";
 import { IconHistory } from "@tabler/icons-react";
 
@@ -38,15 +47,16 @@ export function Status() {
                 gap: "0.5rem",
               }}
             >
-              {selectedFlow?.name}
+              {selectedFlow?.context}.{selectedFlow?.name}
             </Title>
             <Button
               variant="subtle"
-              size="compact-sm"
-              rightSection={<IconHistory size={16} />}
+              size="sm"
               onClick={() => navigate(`/trip/${selectedTrip?.id}/events`)}
             >
-              View Events
+              <Tooltip label="Events">
+                <IconHistory size={20} />
+              </Tooltip>
             </Button>
           </Group>
           {selectedTrip?.entity?.type != null && selectedTrip.entity.name && (
@@ -116,11 +126,9 @@ export function Status() {
               Parameters
             </Text>
             <Group gap="xs">
-              {selectedFlow?.parameter.map(
-                (param: FieldDescriptorProto, index: number) => (
-                  <Field key={index} field={param} />
-                )
-              )}
+              {selectedFlow?.parameter.map((param, index) => (
+                <Field key={index} field={param} />
+              ))}
             </Group>
           </div>
         </Stack>

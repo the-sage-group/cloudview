@@ -28,18 +28,20 @@ const edgeTypes = {
 };
 
 export default function Flow() {
-  const { routeName } = useParams();
+  const { context, name } = useParams();
   const [nodes, setNodes] = useNodesState<FlowNodeType>([]);
   const [edges, setEdges] = useEdgesState<FlowEdgeType>([]);
   const { selectedFlow, setSelectedFlow, setSelectedNode, flows } = useAwyes();
 
   // Effect for handling route changes
   useEffect(() => {
-    if (!routeName) return;
-    const matchingFlow = flows.find((flow) => flow.name === routeName);
+    if (!context || !name) return;
+    const matchingFlow = flows.find(
+      (flow) => flow.context === context && flow.name === name
+    );
     if (!matchingFlow) return;
     setSelectedFlow(matchingFlow);
-  }, [routeName, flows]);
+  }, [context, name, flows]);
 
   // Effect for updating nodes and edges when selectedFlow changes
   useEffect(() => {

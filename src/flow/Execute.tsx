@@ -28,6 +28,7 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 
 import { useAwyes, useGitHub } from "../Context";
+import { Field } from "../molecules/Field";
 
 export function Execute() {
   const navigate = useNavigate();
@@ -73,7 +74,14 @@ export function Execute() {
       <Modal
         opened={modalOpened}
         onClose={modal.close}
-        title={<Title order={3}>Execute Flow</Title>}
+        title={
+          <Title order={3}>
+            Execute:{" "}
+            <Text span fw={700} c="blue" inherit>
+              {`${selectedFlow.context}.${selectedFlow.name}`}
+            </Text>
+          </Title>
+        }
         size="lg"
       >
         <Stack gap="md">
@@ -170,19 +178,22 @@ export function Execute() {
               <Text fw={500}>Parameters</Text>
               {selectedFlow.parameter.map(
                 (param: FieldDescriptorProto, index) => (
-                  <TextInput
-                    key={index}
-                    label={param.name}
-                    placeholder={`Enter ${param.name}`}
-                    value={paramValues[param.name!] || ""}
-                    onChange={(e) =>
-                      setParamValues({
-                        ...paramValues,
-                        [param.name!]: e.currentTarget.value,
-                      })
-                    }
-                    required
-                  />
+                  <div key={index}>
+                    <Group mb="xs">
+                      <Field field={param} />
+                    </Group>
+                    <TextInput
+                      placeholder={`Enter ${param.name}`}
+                      value={paramValues[param.name!] || ""}
+                      onChange={(e) =>
+                        setParamValues({
+                          ...paramValues,
+                          [param.name!]: e.currentTarget.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
                 )
               )}
             </Stack>
@@ -196,16 +207,20 @@ export function Execute() {
               onClick={async () => {
                 if (!selectedEntity) return;
                 try {
-                  const stateValues: { [key: string]: Value } = {};
+                  const stateValues: Record<string, Uint8Array> = {};
                   Object.entries(paramValues).forEach(([key, value]) => {
-                    stateValues[key] = Value.fromJson({ stringValue: value });
+                    stateValues[key] = new TextEncoder().encode(value);
                   });
 
+                  console.log("selectedFlow", selectedFlow);
+                  const positions = selectedFlow.nodes.map((node) => node.data);
                   const { response } = await awyes.startTrip({
                     route: {
                       ...selectedFlow,
-                      position: selectedFlow.nodes.map((node) => node.data),
+                      name: `${selectedFlow.context}.${selectedFlow.name}`,
+                      position: positions,
                     },
+                    start: positions.find((p) => p.handler === "infra.start"),
                     state: stateValues,
                     entity: selectedEntity,
                   });

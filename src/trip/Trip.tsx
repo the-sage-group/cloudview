@@ -59,7 +59,8 @@ export default function Trip() {
           trip: tripId,
         });
         const { response: routeResponse } = await awyes.getRoute({
-          route: tripResponse.trip?.route!,
+          route: tripResponse.trip?.route,
+          version: tripResponse.trip?.routeVersion,
         });
         if (!tripResponse.trip) {
           setError("Trip not found");

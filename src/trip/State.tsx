@@ -9,14 +9,12 @@ import {
   Code,
 } from "@mantine/core";
 import { IconChevronUp } from "@tabler/icons-react";
-import { Value } from "@the-sage-group/awyes-web";
 import { useAwyes } from "../Context";
 
 export function State() {
-  const { selectedTripEvents } = useAwyes();
+  const { selectedTrip } = useAwyes();
   const [showState, setShowState] = useState(false);
-
-  if (!selectedTripEvents.length) return null;
+  if (!selectedTrip) return null;
 
   return (
     <Paper
@@ -53,15 +51,7 @@ export function State() {
         </Title>
         <Group gap="xs">
           <Text size="sm" c="dimmed">
-            {
-              Object.keys(
-                selectedTripEvents.reduce(
-                  (acc, event) => ({ ...acc, ...event.state }),
-                  {}
-                )
-              ).length
-            }{" "}
-            variables
+            {Object.keys(selectedTrip.state).length} variables
           </Text>
           <IconChevronUp
             size={16}
@@ -89,20 +79,13 @@ export function State() {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {Object.entries(
-                selectedTripEvents.reduce(
-                  (acc, event) => ({ ...acc, ...event.state }),
-                  {}
-                )
-              ).map(([key, value]) => (
+              {Object.entries(selectedTrip.state).map(([key, value]) => (
                 <Table.Tr key={key}>
                   <Table.Td>
                     <Text fw={500}>{key}</Text>
                   </Table.Td>
                   <Table.Td>
-                    <Code block>
-                      {JSON.stringify(Value.toJson(value as Value))}
-                    </Code>
+                    <Code block>{new TextDecoder().decode(value)}</Code>
                   </Table.Td>
                 </Table.Tr>
               ))}

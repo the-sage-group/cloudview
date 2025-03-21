@@ -33,12 +33,12 @@ export function Search() {
   });
 
   const mapRoute = (route: Route) => ({
-    value: route.name || "",
-    label: route.name || "",
+    value: `${route.context}.${route.name}`,
+    label: `${route.context}.${route.name}`,
     description: route.description || "",
     icon: <IconRoute size={18} />,
     onClick: () => {
-      navigate(`/route/${route.name}`);
+      navigate(`/route/${route.context}/${route.name}`);
       combobox.closeDropdown();
     },
   });

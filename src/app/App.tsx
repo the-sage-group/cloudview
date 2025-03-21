@@ -179,7 +179,7 @@ export default function App() {
         <AppShell.Main>
           <Routes>
             <RouterRoute path="/" element={<Flow />} />
-            <RouterRoute path="/route/:routeName" element={<Flow />} />
+            <RouterRoute path="/route/:context/:name" element={<Flow />} />
             <RouterRoute path="/trip/:tripId" element={<Trip />} />
             <RouterRoute path="/trip/:tripId/events" element={<Events />} />
             <RouterRoute path="/trips" element={<Trips />} />
