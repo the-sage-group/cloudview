@@ -2,7 +2,13 @@ import { useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { Combobox, Group, Text, useCombobox } from "@mantine/core";
 import { Route, Handler, EntityType, Entity } from "@the-sage-group/awyes-web";
-import { IconSearch, IconRoute, IconBolt, IconUser } from "@tabler/icons-react";
+import {
+  IconSearch,
+  IconRoute,
+  IconBolt,
+  IconUser,
+  IconBrandGithub,
+} from "@tabler/icons-react";
 
 import { useAwyes } from "../Context";
 
@@ -11,6 +17,7 @@ export function Search() {
   const navigate = useNavigate();
   const combobox = useCombobox({});
   const [value, setValue] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const [options, setOptions] = useState<{ group: string; items: any[] }[]>([]);
 
   // Debounced search effect
@@ -24,10 +31,18 @@ export function Search() {
 
   const mapEntity = (entity: Entity) => ({
     value: `${entity.name}-${EntityType[entity.type ?? 0]}`,
-    label: `${EntityType[entity.type ?? 0]}:${entity.name}`,
-    icon: <IconUser size={18} />,
+    label: `${entity.name}`,
+    description: `${EntityType[entity.type ?? 0]}`,
+    icon:
+      entity.type === EntityType.USER ? (
+        <IconUser size={18} />
+      ) : (
+        <IconBrandGithub size={18} />
+      ),
     onClick: () => {
-      navigate(`/trips?entity=${EntityType[entity.type ?? 0]}:${entity.name}`);
+      navigate(
+        `/trips?entity=${entity.name}&type=${EntityType[entity.type ?? 0]}`
+      );
       combobox.closeDropdown();
     },
   });
@@ -98,6 +113,8 @@ export function Search() {
           .find((item) => item.value === val);
         if (option) {
           option.onClick();
+          setIsFocused(false);
+          setValue("");
           combobox.closeDropdown();
         }
       }}
@@ -109,22 +126,24 @@ export function Search() {
             cursor: "pointer",
             padding: "8px 16px",
             borderRadius: "var(--mantine-radius-md)",
-            border: "1px solid var(--mantine-color-blue-2)",
+            border: isFocused
+              ? "1px solid var(--mantine-color-blue-5)"
+              : "1px solid var(--mantine-color-gray-3)",
             width: "500px",
             backgroundColor: "white",
-            boxShadow: "0 2px 4px rgba(37, 99, 235, 0.05)",
+            boxShadow: isFocused
+              ? "0 2px 6px rgba(37, 99, 235, 0.1)"
+              : "0 2px 4px rgba(0, 0, 0, 0.05)",
             transition: "all 0.2s ease",
-            "&:hover": {
-              backgroundColor: "var(--mantine-color-blue-0)",
-              borderColor: "var(--mantine-color-blue-4)",
-              boxShadow: "0 4px 8px rgba(37, 99, 235, 0.1)",
-              transform: "translateY(-1px)",
-            },
           }}
         >
           <IconSearch
             size={18}
-            style={{ color: "var(--mantine-color-blue-6)" }}
+            style={{
+              color: isFocused
+                ? "var(--mantine-color-blue-6)"
+                : "var(--mantine-color-gray-6)",
+            }}
           />
           <input
             value={value}
@@ -133,12 +152,15 @@ export function Search() {
               combobox.openDropdown();
             }}
             onClick={() => {
+              setIsFocused(true);
               combobox.openDropdown();
             }}
             onFocus={() => {
+              setIsFocused(true);
               combobox.openDropdown();
             }}
             onBlur={() => {
+              setIsFocused(false);
               combobox.closeDropdown();
             }}
             placeholder="What are you looking for?"

@@ -16,19 +16,18 @@ import {
   IconBrandGithub,
   IconUser,
   IconSearch,
-  IconPlayerPlay,
+  IconPlayerPlayFilled,
 } from "@tabler/icons-react";
 import {
   EntityType,
   Entity,
   FieldDescriptorProto,
-  Value,
 } from "@the-sage-group/awyes-web";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 
 import { useAwyes, useGitHub } from "../Context";
-import { Field } from "../molecules/Field";
+import { Identifier, IdentifierType } from "../molecules/Identifier";
 
 export function Execute() {
   const navigate = useNavigate();
@@ -49,7 +48,7 @@ export function Execute() {
       <Button
         size="xl"
         radius="xl"
-        color="blue"
+        color="var(--mantine-color-blue-filled)"
         variant="filled"
         disabled={selectedFlow.nodes.length === 0}
         style={{
@@ -68,7 +67,7 @@ export function Execute() {
             : "Execute flow"
         }
       >
-        <IconPlayerPlay size={24} />
+        <IconPlayerPlayFilled size={24} />
       </Button>
 
       <Modal
@@ -180,7 +179,13 @@ export function Execute() {
                 (param: FieldDescriptorProto, index) => (
                   <div key={index}>
                     <Group mb="xs">
-                      <Field field={param} />
+                      <Identifier
+                        type={IdentifierType.FIELD}
+                        data={{
+                          name: param.name,
+                          type: param.type,
+                        }}
+                      />
                     </Group>
                     <TextInput
                       placeholder={`Enter ${param.name}`}

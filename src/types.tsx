@@ -37,7 +37,7 @@ function toFlowEdge(
 export function toFlowGraph(route: Route): FlowGraphType {
   // Create a new dagre graph
   const g = new dagre.graphlib.Graph({ compound: true })
-    .setGraph({})
+    .setGraph({ nodesep: 100, ranksep: 100 })
     .setDefaultEdgeLabel(() => ({}));
   const flowNodes = route.position.map(toFlowNode);
   const flowEdges = route.position.flatMap((position) =>

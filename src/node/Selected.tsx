@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
-import { Paper, Text, Stack, Badge, Group, Code, Table } from "@mantine/core";
-import {
-  FieldDescriptorProto_Label,
-  FieldDescriptorProto_Type,
-  Value,
-  Label,
-  Handler,
-} from "@the-sage-group/awyes-web";
+import { Paper, Text, Stack, Badge, Group, Code } from "@mantine/core";
+import { Label, Handler } from "@the-sage-group/awyes-web";
+
 import { useAwyes } from "../Context";
-import { Field } from "../molecules/Field";
 import { BADGE_COLORS } from "../constants/theme";
+import { Identifier, IdentifierType } from "../molecules/Identifier";
 
 export function SelectedNode() {
   const { awyes, selectedNode, selectedTripEvents } = useAwyes();
@@ -68,9 +63,13 @@ export function SelectedNode() {
             Handler
           </Text>
           <Group gap={8}>
-            <Badge variant="dot" color={BADGE_COLORS.HANDLER} size="sm">
-              <span style={{ fontWeight: 600 }}>{node.handler}</span>
-            </Badge>
+            <Identifier
+              type={IdentifierType.HANDLER}
+              data={{
+                context: node.handler?.split(".")[0] || "",
+                name: node.handler?.split(".")[1] || "",
+              }}
+            />
           </Group>
         </div>
 
@@ -80,8 +79,14 @@ export function SelectedNode() {
               Parameters
             </Text>
             <Stack gap={6}>
-              {handler?.parameters.map((param, index) => (
-                <Field key={index} field={param} />
+              {handler?.parameters.map((param) => (
+                <Identifier
+                  type={IdentifierType.FIELD}
+                  data={{
+                    name: param.name,
+                    type: param.type,
+                  }}
+                />
               ))}
             </Stack>
           </div>
@@ -93,8 +98,14 @@ export function SelectedNode() {
               Returns
             </Text>
             <Stack gap={6}>
-              {handler?.returns.map((ret, index) => (
-                <Field key={index} field={ret} />
+              {handler?.returns.map((ret) => (
+                <Identifier
+                  type={IdentifierType.FIELD}
+                  data={{
+                    name: ret.name,
+                    type: ret.type,
+                  }}
+                />
               ))}
             </Stack>
           </div>
@@ -124,15 +135,7 @@ export function SelectedNode() {
                 >
                   <Group justify="space-between" mb="md">
                     <Text size="xs" c="dimmed">
-                      {event.timestamp
-                        ? new Date(Number(event.timestamp)).toLocaleString(
-                            "en-US",
-                            {
-                              dateStyle: "medium",
-                              timeStyle: "medium",
-                            }
-                          )
-                        : ""}
+                      {new Date(Number(event.timestamp)).toLocaleString()}
                     </Text>
                   </Group>
                   {event.exitMessage && (
@@ -144,10 +147,14 @@ export function SelectedNode() {
                     <Code block>
                       {Object.entries(event.state).map(([key, value]) => {
                         const decodedValue = new TextDecoder().decode(value);
+                        let parsedValue = "";
+                        try {
+                          parsedValue = JSON.parse(decodedValue);
+                        } catch {}
                         return (
                           <div key={key}>
                             <strong>{key}:</strong>{" "}
-                            {JSON.stringify(JSON.parse(decodedValue), null, 2)}
+                            {JSON.stringify(parsedValue, null, 2)}
                           </div>
                         );
                       })}

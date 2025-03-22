@@ -4,10 +4,12 @@ import { useState } from "react";
 
 import { FlowEdgeType } from "../types";
 import { BADGE_COLORS } from "../constants/theme";
+import { useAwyes } from "../Context";
 
 export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
   const { data: edge } = props;
   const [isHovered, setIsHovered] = useState(false);
+  const { selectedTripEvents, selectedFlow } = useAwyes();
 
   if (!edge) return null;
 
@@ -15,16 +17,29 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
   const centerX = props.sourceX + (props.targetX - props.sourceX) * 0.5;
   const centerY = props.sourceY + (props.targetY - props.sourceY) * 0.5;
 
-  const getEdgeColor = () => {
-    if (!isHovered) return "#ccc";
+  // Find the source node to get its name
+  const sourceNode = selectedFlow?.nodes.find(
+    (node) => node.id === props.source
+  );
+  const sourceNodeName = sourceNode?.data.name;
 
-    switch (edge.label) {
-      case "SUCCESS":
-        return `var(--mantine-color-${BADGE_COLORS.SUCCESS}-6)`;
-      case "FAILURE":
-        return `var(--mantine-color-${BADGE_COLORS.FAILURE}-6)`;
-      default:
-        return `var(--mantine-color-${BADGE_COLORS.DEFAULT}-6)`;
+  // Check if this edge has been traversed in any event
+  const isTraversed = selectedTripEvents.some(
+    (event) =>
+      event.position?.name === sourceNodeName && event.exitLabel === edge.label
+  );
+
+  const getEdgeColor = () => {
+    // If the edge has been traversed, highlight it even when not hovered
+    if (isTraversed || isHovered) {
+      switch (edge.label) {
+        case "SUCCESS":
+          return `var(--mantine-color-${BADGE_COLORS.SUCCESS}-6)`;
+        case "FAILURE":
+          return `var(--mantine-color-${BADGE_COLORS.FAILURE}-6)`;
+        default:
+          return `var(--mantine-color-${BADGE_COLORS.DEFAULT}-6)`;
+      }
     }
   };
 
@@ -37,7 +52,6 @@ export function FlowEdge(props: EdgeProps<FlowEdgeType>) {
         {...props}
         style={{
           stroke: getEdgeColor(),
-          opacity: 0.8,
           strokeWidth: isHovered ? 2 : 1,
           transition: "all 0.2s ease-in-out",
         }}

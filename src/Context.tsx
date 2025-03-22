@@ -50,6 +50,7 @@ type AwyesContextType = {
   setSelectedEntity: React.Dispatch<React.SetStateAction<Entity | null>>;
   setSelectedTrip: React.Dispatch<React.SetStateAction<Trip | null>>;
   setSelectedTripEvents: React.Dispatch<React.SetStateAction<Event[]>>;
+  clearSelectedTrip: () => void;
 };
 const transport = new GrpcWebFetchTransport({
   baseUrl: "http://localhost:8080",
@@ -70,6 +71,7 @@ export const AwyesContext = createContext<AwyesContextType>({
   setSelectedEntity: () => {},
   setSelectedTrip: () => {},
   setSelectedTripEvents: () => {},
+  clearSelectedTrip: () => {},
 });
 export function AwyesProvider({ children }: { children: ReactNode }) {
   const [flows, setFlows] = useState<FlowGraphType[]>([]);
@@ -78,6 +80,12 @@ export function AwyesProvider({ children }: { children: ReactNode }) {
   const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [selectedTripEvents, setSelectedTripEvents] = useState<Event[]>([]);
+  const clearSelectedTrip = () => {
+    setSelectedTrip(null);
+    setSelectedTripEvents([]);
+    setSelectedEntity(null);
+    setSelectedNode(null);
+  };
 
   return (
     <AwyesContext.Provider
@@ -95,6 +103,7 @@ export function AwyesProvider({ children }: { children: ReactNode }) {
         setSelectedEntity,
         setSelectedTrip,
         setSelectedTripEvents,
+        clearSelectedTrip,
       }}
     >
       {children}

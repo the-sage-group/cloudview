@@ -35,7 +35,7 @@ export function Navbar() {
           flows.map((flow: FlowGraphType, index: number) => (
             <NavLink
               key={index}
-              label={flow.name}
+              label={flow.context + "." + flow.name}
               rightSection={<IconArrowRight size={16} />}
               active={flow.name === selectedFlow?.name}
               onClick={() => {
@@ -43,7 +43,7 @@ export function Navbar() {
                 setSelectedTrip(null);
                 setSelectedTripEvents([]);
                 setSelectedNode(null);
-                navigate(`/route/${flow.name}`);
+                navigate(`/route/${flow.context}/${flow.name}`);
               }}
               styles={{
                 root: {
@@ -57,4 +57,4 @@ export function Navbar() {
       </div>
     </ScrollArea>
   );
-} 
+}

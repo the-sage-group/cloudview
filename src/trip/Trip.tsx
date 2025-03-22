@@ -1,30 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import {
-  ReactFlow,
-  Background,
-  BackgroundVariant,
-  Controls,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
 
-import { State } from "./State";
-import { Status } from "./Status";
 import { Error } from "../molecules/Error";
-import { FlowEdge } from "../edge/Edge";
 import { useAwyes } from "../Context";
 import { toFlowGraph } from "../types";
-import { FlowNode } from "../node/Node";
-import { SelectedNode } from "../node/Selected";
-import { FlowNodeType } from "../types";
-
-const nodeTypes = {
-  flowNode: FlowNode,
-};
-
-const edgeTypes = {
-  flowEdge: FlowEdge,
-};
+import Graph from "../molecules/Graph";
 
 export default function Trip() {
   const {
@@ -33,7 +13,6 @@ export default function Trip() {
     setSelectedFlow,
     setSelectedTrip,
     setSelectedTripEvents,
-    setSelectedNode,
   } = useAwyes();
   const { tripId } = useParams();
   const [error, setError] = useState<string | null>(null);
@@ -100,42 +79,9 @@ export default function Trip() {
     fetchTripAndSubscribe();
   }, [tripId]);
 
-  const onNodeClick = (_: React.MouseEvent, node: FlowNodeType) => {
-    setSelectedNode(node);
-  };
-
-  if (error) {
-    return <Error title="Trip Not Found" message={error} />;
+  if (error || !selectedFlow) {
+    return <Error title="Trip Not Found" message={error ?? "Trip not found"} />;
   }
 
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <ReactFlow
-        fitView
-        nodes={selectedFlow?.nodes}
-        edges={selectedFlow?.edges}
-        minZoom={0.1}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        edgesFocusable={false}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        edgesReconnectable={false}
-        elementsSelectable={true}
-        onNodeClick={onNodeClick}
-      >
-        <Controls
-          showZoom={false}
-          showInteractive={false}
-          showFitView={true}
-          position="bottom-left"
-        />
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-      </ReactFlow>
-
-      <Status />
-      <SelectedNode />
-      <State />
-    </div>
-  );
+  return <Graph nodes={selectedFlow?.nodes} edges={selectedFlow?.edges} />;
 }

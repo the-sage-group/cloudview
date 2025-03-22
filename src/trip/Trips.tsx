@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { IconArrowLeft, IconX } from "@tabler/icons-react";
 import { useNavigate, useSearchParams } from "react-router";
 import { EntityType, Trip } from "@the-sage-group/awyes-web";
-import { Title, Stack, Text, Button, ActionIcon } from "@mantine/core";
+import { Title, Stack, Text, Button, ActionIcon, Table } from "@mantine/core";
 
 import { useAwyes } from "../Context";
-import { List } from "./List";
 import { Error } from "../molecules/Error";
+import { Identifier, IdentifierType } from "../molecules/Identifier";
 
 export function Trips() {
   const navigate = useNavigate();
@@ -35,8 +35,6 @@ export function Trips() {
     }
     fetchTrips();
   }, []);
-
-  console.log(trips);
 
   if (!entityType || !entityName) {
     return (
@@ -91,20 +89,76 @@ export function Trips() {
 
   return (
     <Stack gap="xl" style={{ position: "relative" }}>
-      <ActionIcon
-        variant="subtle"
-        size="lg"
-        onClick={() => navigate("/")}
-        style={{ position: "absolute", top: 0, right: 0 }}
-      >
-        <IconX size={22} />
-      </ActionIcon>
-
-      <Stack gap={0}>
-        <Title order={2}>Entity Trips</Title>
-      </Stack>
-
-      <List trips={filteredTrips} />
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <Text c="dimmed" size="xl">
+          Viewing trips for
+        </Text>
+        <Identifier
+          type={IdentifierType.ENTITY}
+          data={{
+            name: entityName,
+            type: EntityType[entityType as keyof typeof EntityType],
+          }}
+        />
+      </div>
+      <Table striped highlightOnHover withTableBorder>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Entity</Table.Th>
+            <Table.Th>Route</Table.Th>
+            <Table.Th>Trip ID</Table.Th>
+            <Table.Th>Started At</Table.Th>
+            <Table.Th>Completed At</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {filteredTrips.map((trip) => (
+            <Table.Tr
+              key={trip.id}
+              style={{ cursor: "pointer" }}
+              onClick={(e) => {
+                if (
+                  e.target === e.currentTarget ||
+                  (e.target as HTMLElement).tagName === "TD" ||
+                  (e.target as HTMLElement).closest("td") === e.target
+                ) {
+                  navigate(`/trip/${trip.id}`);
+                }
+              }}
+            >
+              <Table.Td>
+                {trip.entity?.type != null && trip.entity.name && (
+                  <Identifier type={IdentifierType.ENTITY} data={trip.entity} />
+                )}
+              </Table.Td>
+              <Table.Td>
+                {trip.route && (
+                  <Identifier
+                    type={IdentifierType.ROUTE}
+                    data={{
+                      context: trip.route.split(".")[0],
+                      name: trip.route.split(".")[1],
+                    }}
+                  />
+                )}
+              </Table.Td>
+              <Table.Td>
+                {trip.id && (
+                  <Identifier type={IdentifierType.TRIP} data={trip} />
+                )}
+              </Table.Td>
+              <Table.Td>
+                {trip.startedAt &&
+                  new Date(Number(trip.startedAt)).toLocaleString()}
+              </Table.Td>
+              <Table.Td>
+                {trip.completedAt &&
+                  new Date(Number(trip.completedAt)).toLocaleString()}
+              </Table.Td>
+            </Table.Tr>
+          ))}
+        </Table.Tbody>
+      </Table>
     </Stack>
   );
 }

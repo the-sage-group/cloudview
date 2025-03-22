@@ -39,10 +39,6 @@ export function State() {
           borderBottom: showState
             ? "1px solid var(--mantine-color-gray-3)"
             : "none",
-          transition: "background-color 0.2s ease",
-          ":hover": {
-            backgroundColor: "var(--mantine-color-gray-0)",
-          },
         }}
         onClick={() => setShowState(!showState)}
       >

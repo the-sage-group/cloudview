@@ -12,7 +12,7 @@ import type { Endpoints } from "@octokit/types";
 import { Routes, Route as RouterRoute, Link } from "react-router";
 
 import Trip from "../trip/Trip";
-import Flow from "../flow/Flow";
+import Route from "../route/Route";
 import Events from "../events/Events";
 import { Search } from "./Search";
 import { Trips } from "../trip/Trips";
@@ -172,14 +172,12 @@ export default function App() {
           <Box style={{ flex: "1" }} />
         </AppShell.Header>
 
-        <AppShell.Navbar p="md">
-          <Navbar />
-        </AppShell.Navbar>
+        <AppShell.Navbar p="md"></AppShell.Navbar>
 
         <AppShell.Main>
           <Routes>
-            <RouterRoute path="/" element={<Flow />} />
-            <RouterRoute path="/route/:context/:name" element={<Flow />} />
+            <RouterRoute path="/" element={<Route />} />
+            <RouterRoute path="/route/:context/:name" element={<Route />} />
             <RouterRoute path="/trip/:tripId" element={<Trip />} />
             <RouterRoute path="/trip/:tripId/events" element={<Events />} />
             <RouterRoute path="/trips" element={<Trips />} />

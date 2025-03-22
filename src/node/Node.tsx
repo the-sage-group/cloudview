@@ -37,7 +37,7 @@ export function FlowNode(props: NodeProps<FlowNodeType>) {
           width: "fit-content",
           cursor: "pointer",
           background: hasEvents
-            ? "var(--mantine-color-blue-1)"
+            ? "var(--mantine-color-blue-0)"
             : "var(--mantine-color-white)",
           borderWidth: "2px",
           borderColor: isSelected
