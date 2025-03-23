@@ -54,8 +54,6 @@ export default function Events() {
     });
   }, [tripId, selectedTripEvents]);
 
-  console.log(selectedTripEvents.map((e) => e.trip));
-
   // Toggle expanded row
   const toggleRow = (index: number) => {
     setExpandedRow(expandedRow === index ? null : index);

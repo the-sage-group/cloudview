@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Paper, Text, Stack, Badge, Group, Code } from "@mantine/core";
+import { Paper, Text, Stack, Group, Code } from "@mantine/core";
 import { Label, Handler } from "@the-sage-group/awyes-web";
 
 import { useAwyes } from "../Context";
@@ -46,6 +46,9 @@ export function SelectedNode() {
         right: "20px",
         zIndex: 5,
         width: "300px",
+        maxHeight: "80vh",
+        overflowY: "auto",
+        marginBottom: "20px",
       }}
     >
       <Stack gap="md">
@@ -81,6 +84,7 @@ export function SelectedNode() {
             <Stack gap={6}>
               {handler?.parameters.map((param) => (
                 <Identifier
+                  key={param.name}
                   type={IdentifierType.FIELD}
                   data={{
                     name: param.name,
@@ -100,6 +104,7 @@ export function SelectedNode() {
             <Stack gap={6}>
               {handler?.returns.map((ret) => (
                 <Identifier
+                  key={ret.name}
                   type={IdentifierType.FIELD}
                   data={{
                     name: ret.name,
@@ -117,9 +122,9 @@ export function SelectedNode() {
               Events
             </Text>
             <Stack gap="xs">
-              {nodeEvents.map((event, index) => (
+              {nodeEvents.map((event) => (
                 <Paper
-                  key={index}
+                  key={event.id}
                   withBorder
                   p="md"
                   radius="md"

@@ -1,6 +1,5 @@
 import {
   Modal,
-  Title,
   Stack,
   Text,
   Combobox,
@@ -17,6 +16,7 @@ import {
   IconUser,
   IconSearch,
   IconPlayerPlayFilled,
+  IconRoute,
 } from "@tabler/icons-react";
 import {
   EntityType,
@@ -31,7 +31,7 @@ import { Identifier, IdentifierType } from "../molecules/Identifier";
 
 export function Execute() {
   const navigate = useNavigate();
-  const { awyes, selectedFlow } = useAwyes();
+  const { awyes, selectedFlow, selectedTrip } = useAwyes();
   const { repositories } = useGitHub();
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -41,7 +41,7 @@ export function Execute() {
   const [searchValue, setSearchValue] = useState("");
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
 
-  if (!selectedFlow) return null;
+  if (!selectedFlow || selectedTrip) return null;
 
   return (
     <>
@@ -61,11 +61,6 @@ export function Execute() {
           zIndex: 5,
         }}
         onClick={modal.open}
-        title={
-          selectedFlow.nodes.length === 0
-            ? "Add nodes to execute flow"
-            : "Execute flow"
-        }
       >
         <IconPlayerPlayFilled size={24} />
       </Button>
@@ -74,14 +69,15 @@ export function Execute() {
         opened={modalOpened}
         onClose={modal.close}
         title={
-          <Title order={3}>
-            Execute:{" "}
-            <Text span fw={700} c="blue" inherit>
-              {`${selectedFlow.context}.${selectedFlow.name}`}
-            </Text>
-          </Title>
+          <Group>
+            <IconRoute size={24} />
+            <Identifier
+              type={IdentifierType.ROUTE}
+              data={{ context: selectedFlow.context, name: selectedFlow.name }}
+            />
+          </Group>
         }
-        size="lg"
+        size="xl"
       >
         <Stack gap="md">
           <Stack gap="xs">

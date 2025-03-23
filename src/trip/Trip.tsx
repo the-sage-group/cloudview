@@ -63,7 +63,7 @@ export default function Trip() {
         if (!event) return;
 
         setSelectedTripEvents((prev) => [
-          ...prev.filter((e) => e.timestamp !== event.timestamp),
+          ...prev.filter((e) => e.id !== event.id && e.trip === tripId),
           event,
         ]);
       });
@@ -72,16 +72,26 @@ export default function Trip() {
         console.error("Trip subscription error:", error);
       });
 
-      subscription.responses.onComplete(() => {
+      subscription.responses.onComplete(async () => {
+        const { response: tripResponse } = await awyes.getTrip({
+          trip: tripId,
+        });
+        if (!tripResponse.trip) {
+          setError("Trip not found");
+          return;
+        }
+        setSelectedTrip(tripResponse.trip);
         console.log("Trip subscription completed");
       });
     }
     fetchTripAndSubscribe();
   }, [tripId]);
 
-  if (error || !selectedFlow) {
-    return <Error title="Trip Not Found" message={error ?? "Trip not found"} />;
+  if (error) {
+    return <Error title="Trip Not Found" message={error} />;
   }
+
+  if (!selectedFlow) return null;
 
   return <Graph nodes={selectedFlow?.nodes} edges={selectedFlow?.edges} />;
 }
